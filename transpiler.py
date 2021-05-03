@@ -64,7 +64,7 @@ class ImporterManager():
 	def include(self, out_name, import_name):
 		# if import_name in has_imported:
 		#     return
-		print(f'{colors.WARNING}importing: {import_name}{colors.ENDC}')
+		print(f'{colors.WARNING}importing: {import_name.replace("./src/", "")}{colors.ENDC}')
 		#has_imported.append(import_name)
 		out_file = open(out_name, 'w', encoding='utf-8')
 		try:
@@ -72,7 +72,7 @@ class ImporterManager():
 		except FileNotFoundError:
 			print(f'File {import_name} not found')
 			return
-
+		out.write('\n')
 		for line in file_to_import.readlines():
 			if line.startswith(MainFile.command):
 				file_imported = line.replace(MainFile.command, '')
@@ -102,7 +102,7 @@ Importer = ImporterManager()
 # Init ----------------------------------------------------------------
 clear()
 
-print("Waiting modifications...")
+print(f'{colors.HEADER}Waiting modifications...{colors.ENDC}')
 
 def Process():
 	global out
@@ -133,7 +133,8 @@ def Process():
 		else:
 			out.write(line)
 
-	print(f'{colors.OKGREEN}Compiled at: {data.time()}{colors.ENDC}')
+	print(f'{colors.OKGREEN}Transpiled at: {data.time()}{colors.ENDC}')
+	print(f'{colors.HEADER}Waiting modifications...{colors.ENDC}')
 	out.close()
 	source_main.close()
 
