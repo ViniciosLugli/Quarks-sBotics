@@ -1,26 +1,28 @@
 /*--------------------------------------------------
 Code by Quarks - SESI CE 349
-Last change: 03/05/2021 | 11:38:06
+Last change: 04/05/2021 | 17:49:13
 --------------------------------------------------*/
 
+
+//Base for robot and utils
 
 class Calc{
 	public static float constrain(float amt,float low,float high) => ((amt)<(low)?(low):((amt)>(high)?(high):(amt)));
 
 	public static float map(float value, float min, float max, float minTo, float maxTo) => ((((value - min) * (maxTo - minTo)) / (max - min)) + minTo);
-};
+}
 
 class Log{
-	static public void proc(object data) => bc.PrintConsole(1, data.ToString());
+	public static void proc(object data) => bc.Print(1, data.ToString());
 
-	static public void info(object data) => bc.PrintConsole(2, data.ToString());
+	public static void info(object data) => bc.Print(2, data.ToString());
 
-	static public void debug(object data) => bc.PrintConsole(3, data.ToString());
+	public static void debug(object data) => bc.Print(3, data.ToString());
 
-	static public void custom(byte line, object data) => bc.PrintConsole((int)line, data.ToString());
+	public static void custom(byte line, object data) => bc.Print((int)line, data.ToString());
 
-	static public void clear() => bc.ClearConsole();
-};
+	public static void clear() => bc.ClearConsole();
+}
 
 
 public struct Clock{
@@ -61,7 +63,7 @@ class Time{
 		}
 	}
 
-	public static Clock timer {
+	public Clock timer {
 		get {
 			return new Clock(bc.Timer());
 		}
@@ -176,17 +178,10 @@ class Temperature{
 
 public struct Degrees{
 	public Degrees(float raw_){
-		this.raw = raw_;
+		this.raw = (raw_ + 360) % 360;
 	}
 
-	public float raw {
-		get{
-			return this.raw;
-		}
-		set{
-			this.raw = (value + 360) % 360;
-		}
-	}
+	public float raw;
 
 	//Basic operators
 	public static bool operator >(Degrees a, Degrees b) => a.raw > b.raw;
@@ -199,17 +194,19 @@ public struct Degrees{
 	public static float operator +(Degrees a, Degrees b) => ((a.raw + b.raw) + 360) % 360;
 	public static float operator *(Degrees a, Degrees b) => ((a.raw * b.raw) + 360) % 360;
 	public static float operator /(Degrees a, Degrees b) => ((a.raw / b.raw) + 360) % 360;
+
+	public static bool operator %(Degrees a, Degrees b) => (a.raw+1 > b.raw) && (a.raw-1 < b.raw);
 }
 
 class Gyroscope{
 	public static Degrees x {
 		get{
-			return new Degrees(bc.Compass());
+			return new Degrees((float)bc.Compass());
 		}
 	}
 	public static Degrees z {
 		get{
-			return new Degrees(bc.Inclination());
+			return new Degrees((float)bc.Inclination());
 		}
 	}
 
@@ -249,14 +246,14 @@ public struct Color{
 public struct Light{
 	public Light(float raw_){
 		this.raw = raw_;
-		this.decorator = 1;
+		this.decorator = 100;
 	}
 
 	public int decorator;
 	public float raw;
 	public float value {
 		get{
-			return raw*decorator;
+			return decorator-raw;
 		}
 	}
 
@@ -265,8 +262,8 @@ public struct Light{
 	public static bool operator <(Light a, Light b) => a.value < b.value;
 	public static bool operator >=(Light a, Light b) => a.value >= b.value;
 	public static bool operator <=(Light a, Light b) => a.value <= b.value;
-	public static bool operator ==(Light a, Light b) => a.raw == b.raw;
-	public static bool operator !=(Light a, Light b) => a.raw != b.raw;
+	public static bool operator ==(Light a, Light b) => a.value == b.value;
+	public static bool operator !=(Light a, Light b) => a.value != b.value;
 	public static float operator -(Light a, Light b) => a.value - b.value;
 	public static float operator +(Light a, Light b) => a.value + b.value;
 	public static float operator *(Light a, Light b) => a.value * b.value;
@@ -295,6 +292,8 @@ class Reflective{
 			);
 		}
 	}
+
+	public bool hasLine() => bc.ReturnRed((int)this.SensorIndex) < 16;
 
 	public void NOP(){
 		Log.clear();
@@ -348,7 +347,7 @@ class Ultrassonic{
 }
 
 class Actuator{
-	public static void position(float degrees, int velocity){
+	public static void position(float degrees, int velocity=150){
 		Log.clear();
 		bc.ActuatorSpeed(velocity);
 
@@ -376,7 +375,7 @@ class Actuator{
 		}
 	}
 
-	public static void angle(float degrees, int velocity){
+	public static void angle(float degrees, int velocity=150){
 		Log.clear();
 		bc.ActuatorSpeed(velocity);
 
@@ -408,6 +407,15 @@ class Actuator{
 
 	public static void close() {Log.clear();Log.proc($"Actuator | close()");bc.CloseActuator();}
 
+	public static void alignUp(){
+		position(88);
+		angle(0);
+	}
+	public static void alignDown(){
+		position(0);
+		angle(0);
+	}
+
 	public static bool victim {
 		get{
 			return bc.HasVictim();
@@ -420,21 +428,209 @@ class Actuator{
 		bc.AngleActuator();
 		bc.AngleScoop();
 	}
-};
+}
 
 class Servo{
-	public static void move(float left, float right) => bc.MoveFrontal(left, right);
+	public static void move(float left=300, float right=300) => bc.Move(left, right);
 
-	public static void foward(float velocity) => bc.MoveFrontal(velocity, velocity);
+	public static void foward(float velocity=1000) => bc.Move(velocity, velocity);
+
+	public static void left(float velocity=1000) => bc.Move(-velocity, +velocity);
+
+	public static void right(float velocity=1000) => bc.Move(+velocity, -velocity);
 
 	public static void rotate(float angle, float velocity=500) => bc.MoveFrontalAngles(velocity, angle);
 	public static void rotate(Degrees angle, float velocity=500) => bc.MoveFrontalAngles(velocity, angle.raw);
 
-	public static void encoder(int rotations, float velocity=300) => bc.MoveFrontalRotations(velocity, rotations);
+	public static void encoder(float rotations, float velocity=300) => bc.MoveFrontalRotations(velocity, rotations);
 
 	public static float speed() => bc.RobotSpeed();
+
+	public static void stop() => bc.Move(0, 0);
+
+	// public static void nextAngle()
 }
 
-void Main(){
 
+
+//Modules for competition challenges
+
+class Position{
+	public static void alignSensors(){
+		if(s2.light > s3.light){
+			while(s2.light > s3.light){
+				Servo.left();
+			}
+			Servo.stop();
+			Servo.rotate(1);
+		}else if(s3.light > s2.light){
+			while(s3.light > s2.light){
+				Servo.right();
+			}
+			Servo.stop();
+			Servo.rotate(-1);
+		}
+	}
+}
+
+class Green{
+
+	public static bool isGreen(Color color){
+		float rgb = color.r + color.g + color.b;
+		byte pR = (byte)Calc.map(color.r, 0, rgb, 0, 100);
+		byte pG = (byte)Calc.map(color.g, 0, rgb, 0, 100);
+		byte pB = (byte)Calc.map(color.b, 0, rgb, 0, 100);
+		return ((pG > pR) && (pG > pB) && (pG > 70));
+	}
+
+	public static void findLineLeft(){
+		Log.clear();
+		Log.proc($"Green | findLineLeft()");
+		Servo.encoder(10f);
+		Servo.rotate(-30f);
+		Servo.left();
+		while(!s3.hasLine()){}
+		Servo.stop();
+		Servo.rotate(0.5f);
+	}
+
+	public static void findLineRight(){
+		Log.clear();
+		Log.proc($"Green | findLineRight()");
+		Servo.encoder(10f);
+		Servo.rotate(30f);
+		Servo.right();
+		while(!s2.hasLine()){}
+		Servo.stop();
+		Servo.rotate(0.5f);
+	}
+
+	public static void verify(){
+		if(isGreen(s1.rgb) || isGreen(s2.rgb) || isGreen(s3.rgb) || isGreen(s4.rgb)){
+			Position.alignSensors();
+			Time.sleep(32);
+			if(isGreen(s1.rgb) || isGreen(s2.rgb)){
+				findLineLeft();
+			}else if(isGreen(s3.rgb) || isGreen(s4.rgb)){
+				findLineRight();
+			}
+		}
+	}
+}
+
+class CrossPath{
+	public static void findLineLeft(){
+		Log.clear();
+		Log.proc($"CrossPath | findLineLeft()");
+		Degrees maxLeft = new Degrees(Gyroscope.x.raw - 80);
+		Servo.encoder(6f);
+		Servo.left();
+		while((!s3.hasLine()) && (!(Gyroscope.x % maxLeft))){}
+		Servo.stop();
+		Servo.rotate(0.5f);
+	}
+
+	public static void findLineRight(){
+		Log.clear();
+		Log.proc($"CrossPath | findLineRight()");
+		Degrees maxRight = new Degrees(Gyroscope.x.raw + 80);
+		Servo.encoder(6f);
+		Servo.right();
+		while((!s2.hasLine()) && (!(Gyroscope.x % maxRight))){}
+		Servo.stop();
+		Servo.rotate(0.5f);
+	}
+
+	public static void verify(){
+		if((s1.light.value > 60) && (s2.light.value > 55)){
+			findLineLeft();
+		}else if((s4.light.value > 60) && (s3.light.value > 55)){
+			findLineRight();
+		}
+	}
+}
+
+
+class Derivative{
+	float lastError;
+	float derivative;
+
+	public float sample(float error){
+		derivative = error - lastError;
+		lastError = derivative;
+		return derivative;
+	}
+}
+
+class FollowLine{
+
+	private float kP = 0, P = 0;
+	private int error = 0;
+
+	public FollowLine(float kP_){
+		this.kP = kP_;
+	}
+
+	private float sensorsError() => (float)Math.Round((s2.light.value - s3.light.value), 2);
+
+	public void proc(float velocity){
+		Log.proc($"FollowLine | proc({velocity})");
+
+		// Log.info($"{s1.light.value} | {s2.light.value} | {s3.light.value} | {s4.light.value}");
+
+		error = (int)this.sensorsError();
+
+		P = error * this.kP;
+		float leftVel = (float)Math.Round(velocity - P, 2);
+		float rightVel = (float)Math.Round(velocity + P, 2);
+		Log.info($"rightVel: {rightVel}, leftVel: {leftVel}");
+
+		if(rightVel >= 200 && leftVel <= -200){
+			Log.debug($"LEFT");
+			Servo.left();
+			Time.sleep(44);
+		}else if(rightVel <= -200 && leftVel >= 200){
+			Log.debug($"RIGHT");
+			Servo.right();
+			Time.sleep(44);
+		}else{
+			Log.debug($"PROP");
+			Servo.move(leftVel, rightVel);
+		}
+	}
+}
+
+
+//General code:
+
+//Instance sensors ---------------------------------------------
+static Reflective s1 = new Reflective(3);
+static Reflective s2 = new Reflective(2);
+static Reflective s3 = new Reflective(1);
+static Reflective s4 = new Reflective(0);
+
+//Instance modules ---------------------------------------------
+FollowLine mainFollower = new FollowLine(13f);
+
+void setup(){
+	Actuator.alignUp();
+}
+
+void loop(){
+	if((Gyroscope.z.raw >= 330) && (Gyroscope.z.raw <= 355)){
+		mainFollower.proc(210);
+	}else{
+		mainFollower.proc(160);
+	}
+
+	Green.verify();
+	CrossPath.verify();
+}
+
+//----------------------------- Main ---------------------------------------//
+void Main(){
+	setup();
+	for(;;){
+		loop();
+	}
 }

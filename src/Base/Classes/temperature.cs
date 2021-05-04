@@ -1,4 +1,4 @@
-import("Structs/Base/celsius")
+import("Base/Structs/celsius")
 
 class Temperature{
 	public static Celsius celsius {

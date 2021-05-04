@@ -1,4 +1,4 @@
-import("Structs/Base/clock")
+import("Base/Structs/clock")
 
 class Time{
 	public static Clock current {
@@ -7,7 +7,7 @@ class Time{
 		}
 	}
 
-	public static Clock timer {
+	public Clock timer {
 		get {
 			return new Clock(bc.Timer());
 		}

@@ -1,4 +1,4 @@
-import("Structs/Base/colors")
+import("Base/Structs/colors")
 
 class Reflective{
 	private byte SensorIndex = 0;
@@ -22,6 +22,8 @@ class Reflective{
 			);
 		}
 	}
+
+	public bool hasLine() => bc.ReturnRed((int)this.SensorIndex) < 16;
 
 	public void NOP(){
 		Log.clear();

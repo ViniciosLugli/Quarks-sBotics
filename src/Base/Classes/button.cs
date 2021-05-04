@@ -1,4 +1,4 @@
-import("Structs/Base/action")
+import("Base/Structs/action")
 
 class Button{
 	private byte SensorIndex = 1;

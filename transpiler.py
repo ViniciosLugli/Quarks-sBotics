@@ -74,10 +74,9 @@ class ImporterManager():
 			return
 		out.write('\n')
 		for line in file_to_import.readlines():
-			if line.startswith(MainFile.command):
+			if line.find(MainFile.command) > -1:
 				file_imported = line.replace(MainFile.command, '')
-				file_imported = file_imported.strip()[
-					2:file_imported.find('")')]
+				file_imported = file_imported[file_imported.find('("')+2:file_imported.find('")')]
 				file_imported = (
 					f'./src/{file_imported}.' +
 					f'{MainFile.extension}'
@@ -86,9 +85,6 @@ class ImporterManager():
 			else:
 				out.write(line)
 
-		out_file.write(f'{MainFile.comment} file "{import_name}"\n')
-		out_file.write(str(file_to_import.read()))
-		out_file.write(f'\n{MainFile.comment} end file\n\n\n')
 		out_file.close()
 		file_to_import.close()
 
@@ -109,34 +105,16 @@ def Process():
 	clear()
 	data = datetime.datetime.now().replace(microsecond=0)
 
-	source_main = open(
-		f'./src/main.{MainFile.extension}',
-		'r',
-		encoding='utf-8'
-	)
 	out = open(f'./releases/{MainFile.name}', 'w', encoding='utf-8')
 	out.write('/*' + '-'*50+'\n')
 	out.write(f'Code by Quarks - SESI CE 349\n')
 	out.write('Last change: ' + str(data.strftime("%d")) + '/' + str(data.strftime("%m")) + '/' + str(data.strftime("%Y")) + ' | ' + str(data.strftime("%X")) + '\n')
 	out.write('-'*50+'*/\n\n')
-	for line in source_main.readlines():
-		if line.startswith(MainFile.command):
-			file_to_import = line.replace(MainFile.command, '')
-			file_to_import = file_to_import.strip()[
-				2:file_to_import.find('")')]
-			file_to_import = (
-				f'./src/{file_to_import}.' +
-				f'{MainFile.extension}'
-			)
-			Importer.include(
-				f'./releases/{MainFile.name}', file_to_import)
-		else:
-			out.write(line)
+	Importer.include(f'./releases/{MainFile.name}', f'./src/main.{MainFile.extension}')
 
 	print(f'{colors.OKGREEN}Transpiled at: {data.time()}{colors.ENDC}')
 	print(f'{colors.HEADER}Waiting modifications...{colors.ENDC}')
 	out.close()
-	source_main.close()
 
 class Handler(FileSystemEventHandler):
 

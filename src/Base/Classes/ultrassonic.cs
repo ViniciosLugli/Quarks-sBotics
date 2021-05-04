@@ -1,4 +1,4 @@
-import("Structs/Base/distance")
+import("Base/Structs/distance")
 
 class Ultrassonic{
 	private byte SensorIndex = 0;

@@ -1,5 +1,5 @@
 class Actuator{
-	public static void position(float degrees, int velocity){
+	public static void position(float degrees, int velocity=150){
 		Log.clear();
 		bc.ActuatorSpeed(velocity);
 
@@ -27,7 +27,7 @@ class Actuator{
 		}
 	}
 
-	public static void angle(float degrees, int velocity){
+	public static void angle(float degrees, int velocity=150){
 		Log.clear();
 		bc.ActuatorSpeed(velocity);
 
@@ -59,6 +59,15 @@ class Actuator{
 
 	public static void close() {Log.clear();Log.proc($"Actuator | close()");bc.CloseActuator();}
 
+	public static void alignUp(){
+		position(88);
+		angle(0);
+	}
+	public static void alignDown(){
+		position(0);
+		angle(0);
+	}
+
 	public static bool victim {
 		get{
 			return bc.HasVictim();
@@ -71,4 +80,4 @@ class Actuator{
 		bc.AngleActuator();
 		bc.AngleScoop();
 	}
-};
+}

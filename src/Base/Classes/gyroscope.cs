@@ -1,14 +1,14 @@
-import("Structs/Base/degrees")
+import("Base/Structs/degrees")
 
 class Gyroscope{
 	public static Degrees x {
 		get{
-			return new Degrees(bc.Compass());
+			return new Degrees((float)bc.Compass());
 		}
 	}
 	public static Degrees z {
 		get{
-			return new Degrees(bc.Inclination());
+			return new Degrees((float)bc.Inclination());
 		}
 	}
 

@@ -1,4 +1,4 @@
-import("Structs/Base/sound")
+import("Base/Structs/sound")
 
 class Buzzer{
 	public static Sound play(string note, int time=100){bc.PlayNote(1, note, time);return new Sound(note, time);}

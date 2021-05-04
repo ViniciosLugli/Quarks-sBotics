@@ -25,14 +25,14 @@ public struct Color{
 public struct Light{
 	public Light(float raw_){
 		this.raw = raw_;
-		this.decorator = 1;
+		this.decorator = 100;
 	}
 
 	public int decorator;
 	public float raw;
 	public float value {
 		get{
-			return raw*decorator;
+			return decorator-raw;
 		}
 	}
 
@@ -41,8 +41,8 @@ public struct Light{
 	public static bool operator <(Light a, Light b) => a.value < b.value;
 	public static bool operator >=(Light a, Light b) => a.value >= b.value;
 	public static bool operator <=(Light a, Light b) => a.value <= b.value;
-	public static bool operator ==(Light a, Light b) => a.raw == b.raw;
-	public static bool operator !=(Light a, Light b) => a.raw != b.raw;
+	public static bool operator ==(Light a, Light b) => a.value == b.value;
+	public static bool operator !=(Light a, Light b) => a.value != b.value;
 	public static float operator -(Light a, Light b) => a.value - b.value;
 	public static float operator +(Light a, Light b) => a.value + b.value;
 	public static float operator *(Light a, Light b) => a.value * b.value;
