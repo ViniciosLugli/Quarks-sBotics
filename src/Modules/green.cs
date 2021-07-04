@@ -5,12 +5,12 @@ class Green{
 		byte pR = (byte)Calc.map(color.r, 0, rgb, 0, 100);
 		byte pG = (byte)Calc.map(color.g, 0, rgb, 0, 100);
 		byte pB = (byte)Calc.map(color.b, 0, rgb, 0, 100);
-		return ((pG > pR) && (pG > pB) && (pG > 70));
+		return ((pG > pR) && (pG > pB) && (pG > 65));
 	}
 
 	public static void findLineLeft(){
 		Log.clear();
-		Log.proc($"Green | findLineLeft()");
+		Log.proc($"Green", "findLineLeft()");
 		Servo.encoder(10f);
 		Servo.rotate(-30f);
 		Servo.left();
@@ -21,7 +21,7 @@ class Green{
 
 	public static void findLineRight(){
 		Log.clear();
-		Log.proc($"Green | findLineRight()");
+		Log.proc($"Green", "findLineRight()");
 		Servo.encoder(10f);
 		Servo.rotate(30f);
 		Servo.right();

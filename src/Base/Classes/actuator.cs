@@ -1,4 +1,4 @@
-class Actuator{
+public static class Actuator{
 	public static void position(float degrees, int velocity=150){
 		Log.clear();
 		bc.ActuatorSpeed(velocity);
@@ -8,7 +8,7 @@ class Actuator{
 
 		degrees = (degrees < 0 || degrees > 300) ? 0 : (degrees > 88) ? 88 : degrees;
 
-		Log.proc($"Actuator | position({degrees}, {velocity})");
+		Log.proc($"Actuator", "position({degrees}, {velocity})");
 
 		if(degrees > local_angle){
 			while(degrees > local_angle){
@@ -36,7 +36,7 @@ class Actuator{
 
 		degrees = (degrees < 0 || degrees > 300) ? 0 : (degrees > 12) ? 12 : degrees;
 
-		Log.proc($"Actuator | angle({degrees}, {velocity})");
+		Log.proc($"Actuator", "angle({degrees}, {velocity})");
 
 		if(degrees > local_angle){
 			while(degrees > local_angle){
@@ -55,9 +55,19 @@ class Actuator{
 		}
 	}
 
-	public static void open() {Log.clear();Log.proc($"Actuator | open()");bc.OpenActuator();}
+	public static bool victim {
+		get => bc.HasVictim();
+	}
 
-	public static void close() {Log.clear();Log.proc($"Actuator | close()");bc.CloseActuator();}
+	public static void open() {
+		Log.clear();Log.proc($"Actuator", "open()");
+		bc.OpenActuator();
+	}
+
+	public static void close() {
+		Log.clear();Log.proc($"Actuator", "close()");
+		bc.CloseActuator();
+	}
 
 	public static void alignUp(){
 		position(88);
@@ -68,15 +78,9 @@ class Actuator{
 		angle(0);
 	}
 
-	public static bool victim {
-		get{
-			return bc.HasVictim();
-		}
-	}
-
 	public static void NOP(){
 		Log.clear();
-		Log.proc($"Actuator | NOP()");
+		Log.proc($"Actuator", "NOP()");
 		bc.AngleActuator();
 		bc.AngleScoop();
 	}

@@ -1,7 +1,7 @@
 class CrossPath{
 	public static void findLineLeft(){
 		Log.clear();
-		Log.proc($"CrossPath | findLineLeft()");
+		Log.proc($"CrossPath", "findLineLeft()");
 		Degrees maxLeft = new Degrees(Gyroscope.x.raw - 80);
 		Servo.encoder(6f);
 		Servo.left();
@@ -12,7 +12,7 @@ class CrossPath{
 
 	public static void findLineRight(){
 		Log.clear();
-		Log.proc($"CrossPath | findLineRight()");
+		Log.proc($"CrossPath", "findLineRight()");
 		Degrees maxRight = new Degrees(Gyroscope.x.raw + 80);
 		Servo.encoder(6f);
 		Servo.right();

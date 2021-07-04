@@ -10,9 +10,33 @@ public struct Color{
 	public float b;
 
 	public float[] raw{
-		get{
-			return new float[]{this.r, this.g, this.b};
+		get => new float[]{this.r, this.g, this.b};
+	}
+
+	public string toHex(){
+		string rs = Color.DecimalToHexadecimal((int)this.r);
+		string gs = Color.DecimalToHexadecimal((int)this.g);
+		string bs = Color.DecimalToHexadecimal((int)this.b);
+
+		return '#' + rs + gs + bs;
+	}
+
+	private static string DecimalToHexadecimal(int dec){
+		if (dec <= 0)
+			return "00";
+		int hex = dec;
+		string hexStr = string.Empty;
+		while (dec > 0){
+			hex = dec % 16;
+
+			if (hex < 10)
+				hexStr = hexStr.Insert(0, Convert.ToChar(hex + 48).ToString());
+			else
+				hexStr = hexStr.Insert(0, Convert.ToChar(hex + 55).ToString());
+
+			dec /= 16;
 		}
+		return hexStr;
 	}
 
 	//Basic operators
@@ -31,9 +55,7 @@ public struct Light{
 	public int decorator;
 	public float raw;
 	public float value {
-		get{
-			return decorator-raw;
-		}
+		get => decorator-raw;
 	}
 
 	//Basic operators

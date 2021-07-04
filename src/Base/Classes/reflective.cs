@@ -1,4 +1,4 @@
-import("Base/Structs/colors")
+import("Base/Structs/colors.cs");
 
 class Reflective{
 	private byte SensorIndex = 0;
@@ -8,26 +8,22 @@ class Reflective{
 	}
 
 	public Light light{
-		get{
-			return new Light(bc.Lightness((int)this.SensorIndex));
-		}
+		get => new Light(bc.Lightness((int)this.SensorIndex));
 	}
 
 	public Color rgb{
-		get{
-			return new Color(
+		get => new Color(
 				bc.ReturnRed((int)this.SensorIndex),
 				bc.ReturnGreen((int)this.SensorIndex),
 				bc.ReturnBlue((int)this.SensorIndex)
 			);
-		}
 	}
 
-	public bool hasLine() => bc.ReturnRed((int)this.SensorIndex) < 16;
+	public bool hasLine() => bc.ReturnRed((int)this.SensorIndex) < 26;
 
 	public void NOP(){
 		Log.clear();
-		Log.proc($"Reflective({SensorIndex}) | NOP()");
+		Log.proc($"Reflective({SensorIndex})", "NOP()");
 		bc.Lightness((int)this.SensorIndex);
 		bc.ReturnRed((int)this.SensorIndex);
 		bc.ReturnGreen((int)this.SensorIndex);

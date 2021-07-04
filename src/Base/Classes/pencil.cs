@@ -1,4 +1,4 @@
-class Pencil{
+public static class Pencil{
 	public static void start() => bc.Draw();
 
 	public static void stop() => bc.StopDrawing();

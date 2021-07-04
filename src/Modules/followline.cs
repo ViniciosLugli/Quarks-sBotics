@@ -1,5 +1,3 @@
-import("Utils/derivative");
-
 class FollowLine{
 
 	private float kP = 0, P = 0;
@@ -12,9 +10,9 @@ class FollowLine{
 	private float sensorsError() => (float)Math.Round((s2.light.value - s3.light.value), 2);
 
 	public void proc(float velocity){
-		Log.proc($"FollowLine | proc({velocity})");
+		Log.proc($"FollowLine", $"proc({velocity})");
 
-		// Log.info($"{s1.light.value} | {s2.light.value} | {s3.light.value} | {s4.light.value}");
+		// Log.info($"{s1.light.value}", "{s2.light.value}", "{s3.light.value}", "{s4.light.value}");
 
 		error = (int)this.sensorsError();
 
