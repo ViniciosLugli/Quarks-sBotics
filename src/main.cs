@@ -18,10 +18,7 @@ import("Base/Classes/servo.cs");
 
 
 //Modules for competition challenges
-//iamport("Modules/position.cs");
-//iamport("Modules/green.cs");
-//iamport("Modules/crosspath.cs");
-import("Modules/followline.cs");
+import("Modules/floorRoute.cs");
 
 /* --------------- General code --------------- */
 
@@ -40,20 +37,20 @@ void setup(){
 //Main loop
 void loop(){
 
-	if((CurrentState & (byte)States.FOLLOWLINE) != 0){
-	} else if ((CurrentState & (byte)States.OBSTACLE) != 0){
+	if((this.CurrentState & (byte)States.FOLLOWLINE) != 0){
+	} else if ((this.CurrentState & (byte)States.OBSTACLE) != 0){
 
-	}else if ((CurrentState & (byte)States.UPRAMP) != 0){
+	}else if ((this.CurrentState & (byte)States.UPRAMP) != 0){
 
-	}else if ((CurrentState & (byte)States.DOWNRAMP) != 0){
+	}else if ((this.CurrentState & (byte)States.DOWNRAMP) != 0){
 
-	}else if ((CurrentState & (byte)States.RESCUERAMP) != 0){
+	}else if ((this.CurrentState & (byte)States.RESCUERAMP) != 0){
 
-	}else if ((CurrentState & (byte)States.RESCUE) != 0){
+	}else if ((this.CurrentState & (byte)States.RESCUE) != 0){
 
-	}else if ((CurrentState & (byte)States.RESCUEEXIT) != 0){
+	}else if ((this.CurrentState & (byte)States.RESCUEEXIT) != 0){
 
-	}else if ((CurrentState & (byte)States.NOP) != 0){
+	}else if ((this.CurrentState & (byte)States.NOP) != 0){
 	}
 }
 

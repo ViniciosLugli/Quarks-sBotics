@@ -1,11 +1,11 @@
-//Private robot info. current robo-4:
+//Private robot info. current robo-3:
 private const byte kLights = 3;//number of sensors
 private const byte kUltrassonics = 2;//number of sensors
 private const byte kRefreshRate = 31;//ms of refresh rate in color/light sensor
 //
 
 //Data ---------------------------------------------
-static byte CurrentState = 0b_0000_0001;//Init in followline
+byte CurrentState = 0b_0000_0001;//Init in followline
 
 enum States : byte {
     FOLLOWLINE = 1 << 0,

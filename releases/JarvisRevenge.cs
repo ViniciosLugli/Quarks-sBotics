@@ -1,12 +1,12 @@
 //Base for robot and utils
-//Private robot info. current robo-4:
+//Private robot info. current robo-3:
 private const byte kLights = 3;//number of sensors
 private const byte kUltrassonics = 2;//number of sensors
 private const byte kRefreshRate = 31;//ms of refresh rate in color/light sensor
 //
 
 //Data ---------------------------------------------
-static byte CurrentState = 0b_0000_0001;//Init in followline
+byte CurrentState = 0b_0000_0001;//Init in followline
 
 enum States : byte {
     FOLLOWLINE = 1 << 0,
@@ -496,50 +496,33 @@ public static class Servo{
 
 
 //Modules for competition challenges
-//iamport("Modules/position.cs");
-//iamport("Modules/green.cs");
-//iamport("Modules/crosspath.cs");
-public static class LowerRoute{
+public static class FloorRoute{
 	public static class FollowLine{
 		public static void proc(){
 			Log.proc();
 			Log.debug(BOLD(COLOR($"{s1.light.raw} | {s2.light.raw}", "#FFEA79")));
 		}
 	}
-
-public static class CrossPath{
+	public static class CrossPath{
 		public static void findLineLeft(){
-
 		}
-
 		public static void findLineRight(){
-
 		}
-
-		public static void verify()
-		{
+		public static void verify(){
 		}
 	}
-
 	public class Green{
 		public static void findLineLeft(){
-
 		}
-
 		public static void findLineRight(){
-
 		}
-
 		public static void verify(){
-
 		}
 	}
 	public class Position{
 		public static void alignSensors(){
-
 		}
 	}
-
 }
 
 /* --------------- General code --------------- */
@@ -559,20 +542,20 @@ void setup(){
 //Main loop
 void loop(){
 
-	if((CurrentState & (byte)States.FOLLOWLINE) != 0){
-	} else if ((CurrentState & (byte)States.OBSTACLE) != 0){
+	if((this.CurrentState & (byte)States.FOLLOWLINE) != 0){
+	} else if ((this.CurrentState & (byte)States.OBSTACLE) != 0){
 
-	}else if ((CurrentState & (byte)States.UPRAMP) != 0){
+	}else if ((this.CurrentState & (byte)States.UPRAMP) != 0){
 
-	}else if ((CurrentState & (byte)States.DOWNRAMP) != 0){
+	}else if ((this.CurrentState & (byte)States.DOWNRAMP) != 0){
 
-	}else if ((CurrentState & (byte)States.RESCUERAMP) != 0){
+	}else if ((this.CurrentState & (byte)States.RESCUERAMP) != 0){
 
-	}else if ((CurrentState & (byte)States.RESCUE) != 0){
+	}else if ((this.CurrentState & (byte)States.RESCUE) != 0){
 
-	}else if ((CurrentState & (byte)States.RESCUEEXIT) != 0){
+	}else if ((this.CurrentState & (byte)States.RESCUEEXIT) != 0){
 
-	}else if ((CurrentState & (byte)States.NOP) != 0){
+	}else if ((this.CurrentState & (byte)States.NOP) != 0){
 	}
 }
 
