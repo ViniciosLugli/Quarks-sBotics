@@ -1,15 +1,13 @@
-import("Base/Structs/celsius")
+import("Base/Structs/celsius.cs");
 
-class Temperature{
+public static class Temperature{
 	public static Celsius celsius {
-		get{
-			return new Celsius((float)bc.Heat());
-		}
+		get => new Celsius((float)bc.Heat());
 	}
 
 	public static void NOP(){
 		Log.clear();
-		Log.proc("Temperature | NOP()");
+		Log.proc();
 		bc.Heat();
 	}
 }

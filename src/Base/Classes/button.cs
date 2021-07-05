@@ -1,6 +1,6 @@
-import("Base/Structs/action")
+import("Base/Structs/action.cs");
 
-class Button{
+public class Button{
 	private byte SensorIndex = 1;
 
 	public Button(byte SensorIndex_){
@@ -8,14 +8,12 @@ class Button{
 	}
 
 	public Action state{
-		get{
-			return new Action(bc.Touch((int)this.SensorIndex));
-		}
+		get => new Action(bc.Touch((int)this.SensorIndex));
 	}
 
 	public void NOP(){
 		Log.clear();
-		Log.proc($"Button({SensorIndex}) | NOP()");
+		Log.proc();
 		bc.Touch((int)this.SensorIndex);
 	}
 }
