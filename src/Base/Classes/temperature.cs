@@ -7,7 +7,7 @@ public static class Temperature{
 
 	public static void NOP(){
 		Log.clear();
-		Log.proc("Temperature", "NOP()");
+		Log.proc();
 		bc.Heat();
 	}
 }

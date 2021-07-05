@@ -1,4 +1,4 @@
-import("Base/Structs/distance.cs")
+import("Base/Structs/distance.cs");
 
 class Ultrassonic{
 	private byte SensorIndex = 0;
@@ -13,7 +13,7 @@ class Ultrassonic{
 
 	public void NOP(){
 		Log.clear();
-		Log.proc($"Actuator", "NOP()");
+		Log.proc();
 		bc.Distance((int)this.SensorIndex);
 	}
 }

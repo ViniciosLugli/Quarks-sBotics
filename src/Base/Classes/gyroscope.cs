@@ -16,7 +16,7 @@ public static class Gyroscope{
 
 	public static void NOP(){
 		Log.clear();
-		Log.proc("Gyroscope", "NOP()");
+		Log.proc();
 		bc.Compass();
 		bc.Inclination();
 	}

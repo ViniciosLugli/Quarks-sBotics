@@ -8,7 +8,7 @@ public static class Actuator{
 
 		degrees = (degrees < 0 || degrees > 300) ? 0 : (degrees > 88) ? 88 : degrees;
 
-		Log.proc($"Actuator", "position({degrees}, {velocity})");
+		Log.proc();
 
 		if(degrees > local_angle){
 			while(degrees > local_angle){
@@ -36,7 +36,7 @@ public static class Actuator{
 
 		degrees = (degrees < 0 || degrees > 300) ? 0 : (degrees > 12) ? 12 : degrees;
 
-		Log.proc($"Actuator", "angle({degrees}, {velocity})");
+		Log.proc();
 
 		if(degrees > local_angle){
 			while(degrees > local_angle){
@@ -60,12 +60,14 @@ public static class Actuator{
 	}
 
 	public static void open() {
-		Log.clear();Log.proc($"Actuator", "open()");
+		Log.clear();
+		Log.proc();
 		bc.OpenActuator();
 	}
 
 	public static void close() {
-		Log.clear();Log.proc($"Actuator", "close()");
+		Log.clear();
+		Log.proc();
 		bc.CloseActuator();
 	}
 
@@ -80,7 +82,7 @@ public static class Actuator{
 
 	public static void NOP(){
 		Log.clear();
-		Log.proc($"Actuator", "NOP()");
+		Log.proc();
 		bc.AngleActuator();
 		bc.AngleScoop();
 	}

@@ -23,33 +23,35 @@ class Calc{
 
 	public static float map(float value, float min, float max, float minTo, float maxTo) => ((((value - min) * (maxTo - minTo)) / (max - min)) + minTo);
 }
-static string BOLD(string _str) => $"<b>{_str}</b>";
+static string BOLD(string _str) => $"<b>{_str.ToString()}</b>";
 
-static string UNDERLINE(string _str) => $"<u>{_str}</u>";
+static string UNDERLINE(string _str) => $"<u>{_str.ToString()}</u>";
 
-static string ITALIC(string _str) => $"<i>{_str}</i>";
+static string ITALIC(string _str) => $"<i>{_str.ToString()}</i>";
 
-/// <param name="_size">Size of font.</param>
-static string RESIZE(string _str, float _size) => $"<size={_size}>{_str}</size>";
+static string RESIZE(string _str, float _size) => $"<size={_size}>{_str.ToString()}</size>";
 
-/// <param name="_color">Color of string with hex and basic color. for example: 'red' and '#0000FF'.</param>
-//static string COLOR(string _str, string _color) => $"<color={_color}>{_str}</color>";
+static string COLOR(string _str, string _color) => $"<color={_color}>{_str.ToString()}</color>";
+static string COLOR(string _str, Color _color) => $"<color={_color.toHex()}>{_str.ToString()}</color>";
 
-/// <param name="_color">Color of string with hex and basic color. for example: 'red'.</param>
-static string COLOR(string _str, Color _color) => $"<color={_color.toHex()}>{_str}</color>";
+static string ALIGN(string _str, string _alignment) => $"<align=\"{_alignment}\">{_str.ToString()}";
+public static class Robot{
+	public static void throwError(object message) => bc.RobotError(message.ToString());
+	public static void throwError() => bc.RobotError();
+	public static void endCode() => bc.CodeEnd();
+}
+public static class Log{
+	public static void proc(object local, object process) => bc.Print(0, $"<align=\"center\">{COLOR(BOLD(local.ToString()), "#FF6188")} {COLOR(process.ToString(), "#947BAF")}");
+	public static void proc(){
+		var methodInfo = (new System.Diagnostics.StackTrace()).GetFrame(1).GetMethod();
+		bc.Print(0,$"<align=\"center\">{COLOR(BOLD(methodInfo.ReflectedType.Name),"#FF6188")} {COLOR(methodInfo.Name, "#947BAF")}");
+	}
 
-/// <param name="_alignment">Alignment of string in console. Not work so good...</param>
-static string ALIGN(string _str, string _alignment) => $"<align=\"{_alignment}\">{_str}</align>";
+	public static void info(object data) => bc.Print(1, "<align=\"center\">"+data.ToString());
 
-/// MORE INFOS IN http://digitalnativestudios.com/textmeshpro/docs/rich-text/
-class Log{
-	public static void proc(object local, object process) => bc.Print(1, $"{BOLD(local.ToString())} | {COLOR(process.ToString(), new Color(200, 200, 200))}");
+	public static void debug(object data) => bc.Print(2, "<align=\"center\">"+data.ToString());
 
-	public static void info(object data) => bc.Print(2, data.ToString());
-
-	public static void debug(object data) => bc.Print(3, data.ToString());
-
-	public static void custom(byte line, object data) => bc.Print((int)line, data.ToString());
+	public static void custom(byte line, object data) => bc.Print((int)line, "<align=\"center\">"+data.ToString());
 
 	public static void clear() => bc.ClearConsole();
 }
@@ -94,7 +96,6 @@ public static class Time{
 	public static void resetTimer() => bc.ResetTimer();
 
 	public static void sleep(int ms) => bc.Wait(ms);
-
 	public static void sleep(Clock clock) => bc.Wait(clock.millis);
 };
 public struct Action{
@@ -109,7 +110,7 @@ public struct Action{
 	public static bool operator !=(Action a, Action b) => a.raw != b.raw;
 }
 
-class Button{
+public class Button{
 	private byte SensorIndex = 1;
 
 	public Button(byte SensorIndex_){
@@ -122,9 +123,16 @@ class Button{
 
 	public void NOP(){
 		Log.clear();
-		Log.proc($"Button({SensorIndex})", "NOP()");
+		Log.proc();
 		bc.Touch((int)this.SensorIndex);
 	}
+}
+public static class Led{
+	public static void on(byte r , byte g, byte b) => bc.TurnLedOn(r, g, b);
+
+	public static void on(Color color) => bc.TurnLedOn((int)color.r, (int)color.g, (int)color.b);
+
+	public static void off() => bc.TurnLedOff();
 }
 public struct Sound{
 	public Sound(string note_, int time_){
@@ -181,7 +189,7 @@ public static class Temperature{
 
 	public static void NOP(){
 		Log.clear();
-		Log.proc("Temperature", "NOP()");
+		Log.proc();
 		bc.Heat();
 	}
 }
@@ -222,7 +230,7 @@ public static class Gyroscope{
 
 	public static void NOP(){
 		Log.clear();
-		Log.proc("Gyroscope", "NOP()");
+		Log.proc();
 		bc.Compass();
 		bc.Inclination();
 	}
@@ -253,10 +261,8 @@ public struct Color{
 	private static string DecimalToHexadecimal(int dec){
 		if (dec <= 0)
 			return "00";
-
 		int hex = dec;
 		string hexStr = string.Empty;
-
 		while (dec > 0){
 			hex = dec % 16;
 
@@ -267,7 +273,6 @@ public struct Color{
 
 			dec /= 16;
 		}
-
 		return hexStr;
 	}
 
@@ -303,7 +308,7 @@ public struct Light{
 	public static float operator /(Light a, Light b) => a.value / b.value;
 }
 
-class Reflective{
+public class Reflective{
 	private byte SensorIndex = 0;
 
 	public Reflective(byte SensorIndex_){
@@ -321,12 +326,19 @@ class Reflective{
 				bc.ReturnBlue((int)this.SensorIndex)
 			);
 	}
-
 	public bool hasLine() => bc.ReturnRed((int)this.SensorIndex) < 26;
+
+	public bool hasGreen(){
+			float rgb = this.rgb.r + this.rgb.g + this.rgb.b;
+			byte pR = (byte)Calc.map(this.rgb.r, 0, rgb, 0, 100);
+			byte pG = (byte)Calc.map(this.rgb.g, 0, rgb, 0, 100);
+			byte pB = (byte)Calc.map(this.rgb.b, 0, rgb, 0, 100);
+			return ((pG > pR) && (pG > pB) && (pG > 65));
+		}
 
 	public void NOP(){
 		Log.clear();
-		Log.proc($"Reflective({SensorIndex})", "NOP()");
+		Log.proc();
 		bc.Lightness((int)this.SensorIndex);
 		bc.ReturnRed((int)this.SensorIndex);
 		bc.ReturnGreen((int)this.SensorIndex);
@@ -368,7 +380,7 @@ class Ultrassonic{
 
 	public void NOP(){
 		Log.clear();
-		Log.proc($"Actuator", "NOP()");
+		Log.proc();
 		bc.Distance((int)this.SensorIndex);
 	}
 }
@@ -382,7 +394,7 @@ public static class Actuator{
 
 		degrees = (degrees < 0 || degrees > 300) ? 0 : (degrees > 88) ? 88 : degrees;
 
-		Log.proc($"Actuator", "position({degrees}, {velocity})");
+		Log.proc();
 
 		if(degrees > local_angle){
 			while(degrees > local_angle){
@@ -410,7 +422,7 @@ public static class Actuator{
 
 		degrees = (degrees < 0 || degrees > 300) ? 0 : (degrees > 12) ? 12 : degrees;
 
-		Log.proc($"Actuator", "angle({degrees}, {velocity})");
+		Log.proc();
 
 		if(degrees > local_angle){
 			while(degrees > local_angle){
@@ -434,12 +446,14 @@ public static class Actuator{
 	}
 
 	public static void open() {
-		Log.clear();Log.proc($"Actuator", "open()");
+		Log.clear();
+		Log.proc();
 		bc.OpenActuator();
 	}
 
 	public static void close() {
-		Log.clear();Log.proc($"Actuator", "close()");
+		Log.clear();
+		Log.proc();
 		bc.CloseActuator();
 	}
 
@@ -454,7 +468,7 @@ public static class Actuator{
 
 	public static void NOP(){
 		Log.clear();
-		Log.proc($"Actuator", "NOP()");
+		Log.proc();
 		bc.AngleActuator();
 		bc.AngleScoop();
 	}
@@ -482,147 +496,60 @@ public static class Servo{
 
 
 //Modules for competition challenges
-class Position{
-	public static void alignSensors(){
-		if(s2.light > s3.light){
-			while(s2.light > s3.light){
-				Servo.left();
-			}
-			Servo.stop();
-			Servo.rotate(1);
-		}else if(s3.light > s2.light){
-			while(s3.light > s2.light){
-				Servo.right();
-			}
-			Servo.stop();
-			Servo.rotate(-1);
+//iamport("Modules/position.cs");
+//iamport("Modules/green.cs");
+//iamport("Modules/crosspath.cs");
+public static class LowerRoute{
+	public static class FollowLine{
+		public static void proc(){
+			Log.proc();
+			Log.debug(BOLD(COLOR($"{s1.light.raw} | {s2.light.raw}", "#FFEA79")));
 		}
 	}
-}
-class Green{
 
-	public static bool isGreen(Color color){
-		float rgb = color.r + color.g + color.b;
-		byte pR = (byte)Calc.map(color.r, 0, rgb, 0, 100);
-		byte pG = (byte)Calc.map(color.g, 0, rgb, 0, 100);
-		byte pB = (byte)Calc.map(color.b, 0, rgb, 0, 100);
-		return ((pG > pR) && (pG > pB) && (pG > 65));
-	}
+public static class CrossPath{
+		public static void findLineLeft(){
 
-	public static void findLineLeft(){
-		Log.clear();
-		Log.proc($"Green", "findLineLeft()");
-		Servo.encoder(10f);
-		Servo.rotate(-30f);
-		Servo.left();
-		while(!s3.hasLine()){}
-		Servo.stop();
-		Servo.rotate(0.5f);
-	}
+		}
 
-	public static void findLineRight(){
-		Log.clear();
-		Log.proc($"Green", "findLineRight()");
-		Servo.encoder(10f);
-		Servo.rotate(30f);
-		Servo.right();
-		while(!s2.hasLine()){}
-		Servo.stop();
-		Servo.rotate(0.5f);
-	}
+		public static void findLineRight(){
 
-	public static void verify(){
-		if(isGreen(s1.rgb) || isGreen(s2.rgb) || isGreen(s3.rgb) || isGreen(s4.rgb)){
-			Position.alignSensors();
-			Time.sleep(32);
-			if(isGreen(s1.rgb) || isGreen(s2.rgb)){
-				findLineLeft();
-			}else if(isGreen(s3.rgb) || isGreen(s4.rgb)){
-				findLineRight();
-			}
+		}
+
+		public static void verify()
+		{
 		}
 	}
-}
-class CrossPath{
-	public static void findLineLeft(){
-		Log.clear();
-		Log.proc($"CrossPath", "findLineLeft()");
-		Degrees maxLeft = new Degrees(Gyroscope.x.raw - 80);
-		Servo.encoder(6f);
-		Servo.left();
-		while((!s3.hasLine()) && (!(Gyroscope.x % maxLeft))){}
-		Servo.stop();
-		Servo.rotate(0.5f);
-	}
 
-	public static void findLineRight(){
-		Log.clear();
-		Log.proc($"CrossPath", "findLineRight()");
-		Degrees maxRight = new Degrees(Gyroscope.x.raw + 80);
-		Servo.encoder(6f);
-		Servo.right();
-		while((!s2.hasLine()) && (!(Gyroscope.x % maxRight))){}
-		Servo.stop();
-		Servo.rotate(0.5f);
-	}
+	public class Green{
+		public static void findLineLeft(){
 
-	public static void verify(){
-		if((s1.light.value > 60) && (s2.light.value > 55)){
-			findLineLeft();
-		}else if((s4.light.value > 60) && (s3.light.value > 55)){
-			findLineRight();
+		}
+
+		public static void findLineRight(){
+
+		}
+
+		public static void verify(){
+
 		}
 	}
-}
-class FollowLine{
+	public class Position{
+		public static void alignSensors(){
 
-	private float kP = 0, P = 0;
-	private int error = 0;
-
-	public FollowLine(float kP_){
-		this.kP = kP_;
-	}
-
-	private float sensorsError() => (float)Math.Round((s2.light.value - s3.light.value), 2);
-
-	public void proc(float velocity){
-		Log.proc($"FollowLine", "proc({velocity})");
-
-		// Log.info($"{s1.light.value}", "{s2.light.value}", "{s3.light.value}", "{s4.light.value}");
-
-		error = (int)this.sensorsError();
-
-		P = error * this.kP;
-		float leftVel = (float)Math.Round(velocity - P, 2);
-		float rightVel = (float)Math.Round(velocity + P, 2);
-		Log.info($"rightVel: {rightVel}, leftVel: {leftVel}");
-
-		if(rightVel >= 200 && leftVel <= -200){
-			Log.debug($"LEFT");
-			Servo.left();
-			Time.sleep(44);
-		}else if(rightVel <= -200 && leftVel >= 200){
-			Log.debug($"RIGHT");
-			Servo.right();
-			Time.sleep(44);
-		}else{
-			Log.debug($"PROP");
-			Servo.move(leftVel, rightVel);
 		}
 	}
+
 }
 
 /* --------------- General code --------------- */
 
 //Instance sensors ---------------------------------------------
-static Reflective s1 = new Reflective(3);
-static Reflective s2 = new Reflective(2);
-static Reflective s3 = new Reflective(1);
-static Reflective s4 = new Reflective(0);
+static Reflective s1 = new Reflective(1);
+static Reflective s2 = new Reflective(0);
 
 //Instance modules ---------------------------------------------
 
-FollowLine mainFollower = new FollowLine(13f);
 
 //Setup program
 void setup(){
@@ -631,10 +558,8 @@ void setup(){
 
 //Main loop
 void loop(){
+
 	if((CurrentState & (byte)States.FOLLOWLINE) != 0){
-		mainFollower.proc(160);
-		Green.verify();
-		CrossPath.verify();
 	} else if ((CurrentState & (byte)States.OBSTACLE) != 0){
 
 	}else if ((CurrentState & (byte)States.UPRAMP) != 0){
@@ -648,7 +573,6 @@ void loop(){
 	}else if ((CurrentState & (byte)States.RESCUEEXIT) != 0){
 
 	}else if ((CurrentState & (byte)States.NOP) != 0){
-		//Formater.format(teste);
 	}
 }
 
@@ -657,7 +581,7 @@ void loop(){
 
 #if(false) //DEBUG MODE MAIN
 	void Main(){
-		for(;;){
+	for(;;){
 		}
 	}
 #else //DEFAULT MAIN
