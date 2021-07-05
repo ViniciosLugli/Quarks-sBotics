@@ -22,6 +22,11 @@ class Calc{
 	public static float constrain(float amt,float low,float high) => ((amt)<(low)?(low):((amt)>(high)?(high):(amt)));
 
 	public static float map(float value, float min, float max, float minTo, float maxTo) => ((((value - min) * (maxTo - minTo)) / (max - min)) + minTo);
+
+	public static string DecToHex(int dec){
+		string hexStr = Convert.ToString(dec, 16);
+		return (hexStr.Length < 2) ? ("0" + hexStr) : hexStr;
+	}
 }
 static string BOLD(string _str) => $"<b>{_str.ToString()}</b>";
 
@@ -33,6 +38,8 @@ static string RESIZE(string _str, float _size) => $"<size={_size}>{_str.ToString
 
 static string COLOR(string _str, string _color) => $"<color={_color}>{_str.ToString()}</color>";
 static string COLOR(string _str, Color _color) => $"<color={_color.toHex()}>{_str.ToString()}</color>";
+
+static string MARKER(string _str, string _color) => $"<mark={_color}>{_str.ToString()}</mark>";
 
 static string ALIGN(string _str, string _alignment) => $"<align=\"{_alignment}\">{_str.ToString()}";
 public static class Robot{
@@ -250,30 +257,24 @@ public struct Color{
 		get => new float[]{this.r, this.g, this.b};
 	}
 
-	public string toHex(){
-		string rs = Color.DecimalToHexadecimal((int)this.r);
-		string gs = Color.DecimalToHexadecimal((int)this.g);
-		string bs = Color.DecimalToHexadecimal((int)this.b);
-
-		return '#' + rs + gs + bs;
+	public bool hasGreen(){
+		float rgb = this.r + this.g + this.b;
+		byte pR = (byte)Calc.map(this.r, 0, rgb, 0, 100);
+		byte pG = (byte)Calc.map(this.g, 0, rgb, 0, 100);
+		byte pB = (byte)Calc.map(this.b, 0, rgb, 0, 100);
+		return ((pG > pR) && (pG > pB) && (pG > 65));
 	}
 
-	private static string DecimalToHexadecimal(int dec){
-		if (dec <= 0)
-			return "00";
-		int hex = dec;
-		string hexStr = string.Empty;
-		while (dec > 0){
-			hex = dec % 16;
+	public string toHex(){
+		float rgb = this.r + this.g + this.b;
+		byte pR = (byte)Calc.map(this.r, 0, rgb, 0, 255);
+		byte pG = (byte)Calc.map(this.g, 0, rgb, 0, 255);
+		byte pB = (byte)Calc.map(this.b, 0, rgb, 0, 255);
+		string rs = Calc.DecToHex((int)(pR));
+		string gs = Calc.DecToHex((int)(pG));
+		string bs = Calc.DecToHex((int)(pB));
 
-			if (hex < 10)
-				hexStr = hexStr.Insert(0, Convert.ToChar(hex + 48).ToString());
-			else
-				hexStr = hexStr.Insert(0, Convert.ToChar(hex + 55).ToString());
-
-			dec /= 16;
-		}
-		return hexStr;
+		return '#' + rs + gs + bs;
 	}
 
 	//Basic operators
@@ -293,6 +294,11 @@ public struct Light{
 	public float raw;
 	public float value {
 		get => decorator-raw;
+	}
+
+	public string toHex(){
+		string grayscaleHex = Calc.DecToHex((int)(this.raw));
+		return '#' + grayscaleHex + grayscaleHex + grayscaleHex;
 	}
 
 	//Basic operators
@@ -327,14 +333,6 @@ public class Reflective{
 			);
 	}
 	public bool hasLine() => bc.ReturnRed((int)this.SensorIndex) < 26;
-
-	public bool hasGreen(){
-			float rgb = this.rgb.r + this.rgb.g + this.rgb.b;
-			byte pR = (byte)Calc.map(this.rgb.r, 0, rgb, 0, 100);
-			byte pG = (byte)Calc.map(this.rgb.g, 0, rgb, 0, 100);
-			byte pB = (byte)Calc.map(this.rgb.b, 0, rgb, 0, 100);
-			return ((pG > pR) && (pG > pB) && (pG > 65));
-		}
 
 	public void NOP(){
 		Log.clear();
@@ -500,7 +498,8 @@ public static class FloorRoute{
 	public static class FollowLine{
 		public static void proc(){
 			Log.proc();
-			Log.debug(BOLD(COLOR($"{s1.light.raw} | {s2.light.raw}", "#FFEA79")));
+			Log.info(BOLD(COLOR($"{s1.light.raw} | {s2.light.raw}", "#FFEA79")));
+			Log.debug($"{MARKER("--", s1.light.toHex())} | {MARKER("--", s2.light.toHex())}");
 		}
 	}
 	public static class CrossPath{
@@ -541,8 +540,8 @@ void setup(){
 
 //Main loop
 void loop(){
-
 	if((this.CurrentState & (byte)States.FOLLOWLINE) != 0){
+		FloorRoute.FollowLine.proc();
 	} else if ((this.CurrentState & (byte)States.OBSTACLE) != 0){
 
 	}else if ((this.CurrentState & (byte)States.UPRAMP) != 0){

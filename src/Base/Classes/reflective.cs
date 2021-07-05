@@ -20,14 +20,6 @@ public class Reflective{
 	}
 	public bool hasLine() => bc.ReturnRed((int)this.SensorIndex) < 26;
 
-	public bool hasGreen(){
-			float rgb = this.rgb.r + this.rgb.g + this.rgb.b;
-			byte pR = (byte)Calc.map(this.rgb.r, 0, rgb, 0, 100);
-			byte pG = (byte)Calc.map(this.rgb.g, 0, rgb, 0, 100);
-			byte pB = (byte)Calc.map(this.rgb.b, 0, rgb, 0, 100);
-			return ((pG > pR) && (pG > pB) && (pG > 65));
-		}
-
 	public void NOP(){
 		Log.clear();
 		Log.proc();

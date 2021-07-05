@@ -9,4 +9,6 @@ static string RESIZE(string _str, float _size) => $"<size={_size}>{_str.ToString
 static string COLOR(string _str, string _color) => $"<color={_color}>{_str.ToString()}</color>";
 static string COLOR(string _str, Color _color) => $"<color={_color.toHex()}>{_str.ToString()}</color>";
 
+static string MARKER(string _str, string _color) => $"<mark={_color}>{_str.ToString()}</mark>";
+
 static string ALIGN(string _str, string _alignment) => $"<align=\"{_alignment}\">{_str.ToString()}";

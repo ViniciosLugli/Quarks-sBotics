@@ -36,8 +36,8 @@ void setup(){
 
 //Main loop
 void loop(){
-
 	if((this.CurrentState & (byte)States.FOLLOWLINE) != 0){
+		FloorRoute.FollowLine.proc();
 	} else if ((this.CurrentState & (byte)States.OBSTACLE) != 0){
 
 	}else if ((this.CurrentState & (byte)States.UPRAMP) != 0){
