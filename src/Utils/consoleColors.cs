@@ -1,14 +1,13 @@
-static string BOLD(string _str) => $"<b>{_str.ToString()}</b>";
+public static class Formatter{
+	public static string parse(string data, string[] offsets){
+		foreach(string tag in offsets){
+			data = Formatter.marker(data, tag);
+		}
+		return data;
+	}
 
-static string UNDERLINE(string _str) => $"<u>{_str.ToString()}</u>";
-
-static string ITALIC(string _str) => $"<i>{_str.ToString()}</i>";
-
-static string RESIZE(string _str, float _size) => $"<size={_size}>{_str.ToString()}</size>";
-
-static string COLOR(string _str, string _color) => $"<color={_color}>{_str.ToString()}</color>";
-static string COLOR(string _str, Color _color) => $"<color={_color.toHex()}>{_str.ToString()}</color>";
-
-static string MARKER(string _str, string _color) => $"<mark={_color}>{_str.ToString()}</mark>";
-
-static string ALIGN(string _str, string _alignment) => $"<align=\"{_alignment}\">{_str.ToString()}";
+	private static string marker(string data_, string tag){
+		string tag_ = (tag.Contains("=")) ? (tag.Split('=')[0] == "align")? $"" : $"</{tag.Split('=')[0]}>" : $"</{tag}>";
+		return $"<{tag}>{data_}{tag_}";
+	}
+}

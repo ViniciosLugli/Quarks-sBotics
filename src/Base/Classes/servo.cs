@@ -1,7 +1,7 @@
 public static class Servo{
 	public static void move(float left=300, float right=300) => bc.Move(left, right);
 
-	public static void foward(float velocity=1000) => bc.Move(velocity, velocity);
+	public static void foward(float velocity=300) => bc.Move(velocity, velocity);
 
 	public static void left(float velocity=1000) => bc.Move(-velocity, +velocity);
 

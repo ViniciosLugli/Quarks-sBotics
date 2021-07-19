@@ -17,3 +17,10 @@ enum States : byte {
     RESCUEEXIT = 1 << 6,
     NOP = 1 << 7
 }
+
+static Sound sTurnNotGreen = new Sound("F2", 80);
+static Sound sTurnGreen = new Sound("C3", 60);
+
+static Color cFollowLine = new Color(255, 255, 255);
+static Color cTurnNotGreen = new Color(0, 0, 0);
+static Color cTurnGreen = new Color(0, 255, 0);

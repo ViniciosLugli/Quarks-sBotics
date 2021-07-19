@@ -20,6 +20,8 @@ public class Reflective{
 	}
 	public bool hasLine() => bc.ReturnRed((int)this.SensorIndex) < 26;
 
+	public bool isColored() => bc.ReturnRed((int)this.SensorIndex) != bc.ReturnBlue((int)this.SensorIndex);
+
 	public void NOP(){
 		Log.clear();
 		Log.proc();
