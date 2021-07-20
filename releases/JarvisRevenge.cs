@@ -1,12 +1,6 @@
 //Base for robot and utils
-//Private robot info. current robo-4:
-private const byte kLights = 3;//number of sensors
-private const byte kUltrassonics = 2;//number of sensors
-private const byte kRefreshRate = 31;//ms of refresh rate in color/light sensor
-//
-
 //Data ---------------------------------------------
-static byte CurrentState = 0b_0000_0001;//Init in followline
+byte CurrentState = 0b_0000_0001;//Init in followline
 
 enum States : byte {
     FOLLOWLINE = 1 << 0,
@@ -18,42 +12,62 @@ enum States : byte {
     RESCUEEXIT = 1 << 6,
     NOP = 1 << 7
 }
+
+static Sound sTurnNotGreen = new Sound("F2", 80);
+static Sound sTurnGreen = new Sound("C3", 60);
+
+static Color cFollowLine = new Color(255, 255, 255);
+static Color cTurnNotGreen = new Color(0, 0, 0);
+static Color cTurnGreen = new Color(0, 255, 0);
+public delegate void MethodHandler();
 class Calc{
 	public static float constrain(float amt,float low,float high) => ((amt)<(low)?(low):((amt)>(high)?(high):(amt)));
 
 	public static float map(float value, float min, float max, float minTo, float maxTo) => ((((value - min) * (maxTo - minTo)) / (max - min)) + minTo);
+
+	public static string DecToHex(int dec){
+		string hexStr = Convert.ToString(dec, 16);
+		return (hexStr.Length < 2) ? ("0" + hexStr) : hexStr;
+	}
 }
-static string BOLD(string _str) => $"<b>{_str.ToString()}</b>";
+public static class Formatter{
+	public static string parse(string data, string[] offsets){
+		foreach(string tag in offsets){
+			data = Formatter.marker(data, tag);
+		}
+		return data;
+	}
 
-static string UNDERLINE(string _str) => $"<u>{_str.ToString()}</u>";
+	private static string marker(string data_, string tag){
+		string tag_ = (tag.Contains("=")) ? (tag.Split('=')[0] == "align")? $"" : $"</{tag.Split('=')[0]}>" : $"</{tag}>";
+		return $"<{tag}>{data_}{tag_}";
+	}
+}
+public static class Log{
+	public static void proc(object local, object process) => bc.Print(0, Formatter.parse($"{Formatter.parse(local.ToString(),new string[]{"color=#FF6188", "b"})} {Formatter.parse(process.ToString(),new string[]{"color=#947BAF", "b"})}", new string[]{"align=center"}));
+	public static void proc(){
+		var methodInfo = (new StackTrace()).GetFrame(1).GetMethod();
+		bc.Print(0, Formatter.parse($"{Formatter.parse(methodInfo.ReflectedType.Name,new string[]{"color=#FF6188", "b"})} {Formatter.parse(methodInfo.Name,new string[]{"color=#947BAF", "b"})}", new string[]{"align=center"}));
+	}
 
-static string ITALIC(string _str) => $"<i>{_str.ToString()}</i>";
+	public static void info(object data) => bc.Print(1, Formatter.parse(data.ToString(), new string[]{"align=center"}));
 
-static string RESIZE(string _str, float _size) => $"<size={_size}>{_str.ToString()}</size>";
+	public static void debug(object data) => bc.Print(2, Formatter.parse(data.ToString(), new string[]{"align=center"}));
 
-static string COLOR(string _str, string _color) => $"<color={_color}>{_str.ToString()}</color>";
-static string COLOR(string _str, Color _color) => $"<color={_color.toHex()}>{_str.ToString()}</color>";
+	public static void custom(byte line, object data) => bc.Print((int)line, Formatter.parse(data.ToString(), new string[]{"align=center"}));
 
-static string ALIGN(string _str, string _alignment) => $"<align=\"{_alignment}\">{_str.ToString()}";
+	public static void clear() => bc.ClearConsole();
+}
 public static class Robot{
+	//Private robot info. current robo-3:
+	public const byte kLights = 3;//number of sensors
+	public const byte kUltrassonics = 2;//number of sensors
+	public const byte kRefreshRate = 31;//ms of refresh rate in color/light sensor
+	//
+
 	public static void throwError(object message) => bc.RobotError(message.ToString());
 	public static void throwError() => bc.RobotError();
 	public static void endCode() => bc.CodeEnd();
-}
-public static class Log{
-	public static void proc(object local, object process) => bc.Print(0, $"<align=\"center\">{COLOR(BOLD(local.ToString()), "#FF6188")} {COLOR(process.ToString(), "#947BAF")}");
-	public static void proc(){
-		var methodInfo = (new System.Diagnostics.StackTrace()).GetFrame(1).GetMethod();
-		bc.Print(0,$"<align=\"center\">{COLOR(BOLD(methodInfo.ReflectedType.Name),"#FF6188")} {COLOR(methodInfo.Name, "#947BAF")}");
-	}
-
-	public static void info(object data) => bc.Print(1, "<align=\"center\">"+data.ToString());
-
-	public static void debug(object data) => bc.Print(2, "<align=\"center\">"+data.ToString());
-
-	public static void custom(byte line, object data) => bc.Print((int)line, "<align=\"center\">"+data.ToString());
-
-	public static void clear() => bc.ClearConsole();
 }
 public struct Clock{
 	public Clock(int millis_){
@@ -96,6 +110,10 @@ public static class Time{
 	public static void resetTimer() => bc.ResetTimer();
 
 	public static void sleep(int ms) => bc.Wait(ms);
+	public static void sleep(int ms, MethodHandler callwhile) {
+		int toWait = Time.current.millis + ms;
+		while (Time.current.millis < toWait){callwhile();}
+	}
 	public static void sleep(Clock clock) => bc.Wait(clock.millis);
 };
 public struct Action{
@@ -149,10 +167,10 @@ public struct Sound{
 }
 
 public static class Buzzer{
-	public static Sound play(string note, int time=100){bc.PlayNote(1, note, time);return new Sound(note, time);}
-	public static Sound play(Sound sound){bc.PlayNote(1, sound.note, sound.time);return new Sound(sound.note, sound.time);}
+	public static void play(string note, int time=100) => bc.PlayNote(0, note, time);
+	public static void play(Sound sound) => bc.PlayNote(0, sound.note, sound.time);
 
-	public static void stop() => bc.StopSound(1);
+	public static void stop() => bc.StopSound(0);
 }
 public static class Pencil{
 	public static void start() => bc.Draw();
@@ -214,9 +232,19 @@ public struct Degrees{
 	public static bool operator %(Degrees a, Degrees b) => (a.raw+1 > b.raw) && (a.raw-1 < b.raw);
 }
 
+private struct DegreesRange{
+	public DegreesRange(float min_, float max_){
+		this.min = new Degrees(min_);
+		this.max = new Degrees(max_);
+	}
+	public Degrees min, max;
+
+	public bool isOnRange(byte offset = 0) => (Gyroscope.z >= this.min) && (Gyroscope.z <= this.max);
+}
+
 public static class Gyroscope{
-	private static List<Degrees> UP_RAMP = new List<Degrees>(){new Degrees(330), new Degrees(355)};
-	private static List<Degrees> DOWN_RAMP = new List<Degrees>(){new Degrees(5), new Degrees(30)};
+
+	private static Degrees[] points = new Degrees[] {new Degrees(359),new Degrees(0), new Degrees(90), new Degrees(180), new Degrees(270)};
 
 	public static Degrees x {
 		get => new Degrees((float)bc.Compass());
@@ -225,8 +253,14 @@ public static class Gyroscope{
 		get => new Degrees((float)bc.Inclination());
 	}
 
-	public static bool isUpRamp() => (Gyroscope.z >= UP_RAMP[0]) && (Gyroscope.z <= UP_RAMP[1]);
-	public static bool isDownRamp() => (Gyroscope.z >= DOWN_RAMP[0]) && (Gyroscope.z <= DOWN_RAMP[1]);
+	public static bool inPoint(){
+		foreach(Degrees point in Gyroscope.points){
+			if(((Gyroscope.x.raw + 8) > point.raw) && (Gyroscope.x.raw - 8 < point.raw)){
+				return true;
+			}
+		}
+		return false;
+	}
 
 	public static void NOP(){
 		Log.clear();
@@ -250,30 +284,24 @@ public struct Color{
 		get => new float[]{this.r, this.g, this.b};
 	}
 
-	public string toHex(){
-		string rs = Color.DecimalToHexadecimal((int)this.r);
-		string gs = Color.DecimalToHexadecimal((int)this.g);
-		string bs = Color.DecimalToHexadecimal((int)this.b);
-
-		return '#' + rs + gs + bs;
+	public bool hasGreen(){
+		float rgb = this.r + this.g + this.b;
+		byte pR = (byte)Calc.map(this.r, 0, rgb, 0, 100);
+		byte pG = (byte)Calc.map(this.g, 0, rgb, 0, 100);
+		byte pB = (byte)Calc.map(this.b, 0, rgb, 0, 100);
+		return ((pG > pR) && (pG > pB) && (pG > 65));
 	}
 
-	private static string DecimalToHexadecimal(int dec){
-		if (dec <= 0)
-			return "00";
-		int hex = dec;
-		string hexStr = string.Empty;
-		while (dec > 0){
-			hex = dec % 16;
+	public string toHex(){
+		float rgb = this.r + this.g + this.b;
+		byte pR = (byte)Calc.map(this.r, 0, rgb, 0, 255);
+		byte pG = (byte)Calc.map(this.g, 0, rgb, 0, 255);
+		byte pB = (byte)Calc.map(this.b, 0, rgb, 0, 255);
+		string rs = Calc.DecToHex((int)(pR));
+		string gs = Calc.DecToHex((int)(pG));
+		string bs = Calc.DecToHex((int)(pB));
 
-			if (hex < 10)
-				hexStr = hexStr.Insert(0, Convert.ToChar(hex + 48).ToString());
-			else
-				hexStr = hexStr.Insert(0, Convert.ToChar(hex + 55).ToString());
-
-			dec /= 16;
-		}
-		return hexStr;
+		return '#' + rs + gs + bs;
 	}
 
 	//Basic operators
@@ -293,6 +321,11 @@ public struct Light{
 	public float raw;
 	public float value {
 		get => decorator-raw;
+	}
+
+	public string toHex(){
+		string grayscaleHex = Calc.DecToHex((int)(this.raw));
+		return '#' + grayscaleHex + grayscaleHex + grayscaleHex;
 	}
 
 	//Basic operators
@@ -326,15 +359,11 @@ public class Reflective{
 				bc.ReturnBlue((int)this.SensorIndex)
 			);
 	}
-	public bool hasLine() => bc.ReturnRed((int)this.SensorIndex) < 26;
+	public bool hasLine() => bc.ReturnRed((int)this.SensorIndex) < 35 && bc.ReturnGreen((int)this.SensorIndex) < 35;
 
-	public bool hasGreen(){
-			float rgb = this.rgb.r + this.rgb.g + this.rgb.b;
-			byte pR = (byte)Calc.map(this.rgb.r, 0, rgb, 0, 100);
-			byte pG = (byte)Calc.map(this.rgb.g, 0, rgb, 0, 100);
-			byte pB = (byte)Calc.map(this.rgb.b, 0, rgb, 0, 100);
-			return ((pG > pR) && (pG > pB) && (pG > 65));
-		}
+	public bool isMat() => bc.ReturnRed((int)this.SensorIndex) > 50;
+
+	public bool isColored() => bc.ReturnRed((int)this.SensorIndex) != bc.ReturnBlue((int)this.SensorIndex);
 
 	public void NOP(){
 		Log.clear();
@@ -476,7 +505,9 @@ public static class Actuator{
 public static class Servo{
 	public static void move(float left=300, float right=300) => bc.Move(left, right);
 
-	public static void foward(float velocity=1000) => bc.Move(velocity, velocity);
+	public static void foward(float velocity=300) => bc.Move(Math.Abs(velocity), Math.Abs(velocity));
+
+	public static void backward(float velocity=300) => bc.Move(-velocity, -velocity);
 
 	public static void left(float velocity=1000) => bc.Move(-velocity, +velocity);
 
@@ -485,7 +516,7 @@ public static class Servo{
 	public static void rotate(float angle, float velocity=500) => bc.MoveFrontalAngles(velocity, angle);
 	public static void rotate(Degrees angle, float velocity=500) => bc.MoveFrontalAngles(velocity, angle.raw);
 
-	public static void encoder(float rotations, float velocity=300) => bc.MoveFrontalRotations(velocity, rotations);
+	public static void encoder(float rotations, float velocity=300) => bc.MoveFrontalRotations(rotations > 0 ? velocity : -velocity, Math.Abs(rotations));
 
 	public static float speed() => bc.RobotSpeed();
 
@@ -496,93 +527,238 @@ public static class Servo{
 
 
 //Modules for competition challenges
-//iamport("Modules/position.cs");
-//iamport("Modules/green.cs");
-//iamport("Modules/crosspath.cs");
-public static class LowerRoute{
-	public static class FollowLine{
-		public static void proc(){
+public static class FloorRoute{
+	public class FollowLine{
+		public FollowLine(ref Reflective refs1_, ref Reflective refs2_, ref Reflective refs3_, ref Reflective refs4_, int velocity_){
+			this.s1 = refs1_;
+			this.s2 = refs2_;
+			this.s3 = refs3_;
+			this.s4 = refs4_;
+			this.velocity = velocity_;
+		}
+	
+		public Reflective s1, s2, s3, s4;
+		private int velocity = 0;
+	
+		private void debugSensors(){
+			Log.info(Formatter.parse($"{this.s1.light.raw} | {this.s2.light.raw} | {this.s3.light.raw} | {this.s4.light.raw}", new string[]{"align=center", "color=#FFEA79", "b"}));
+		}
+	
+		public void proc(){
 			Log.proc();
-			Log.debug(BOLD(COLOR($"{s1.light.raw} | {s2.light.raw}", "#FFEA79")));
+			this.debugSensors();
+			Green.verify(this);
+			CrossPath.verify(this);
+			if((50 - this.s2.light.raw) > 20){
+				Servo.left();
+				Time.sleep(32, () => {Green.verify(this);CrossPath.verify(this);});
+				Servo.stop();
+				Servo.foward(this.velocity);
+				Time.sleep(16, () => {Green.verify(this);CrossPath.verify(this);});
+				Time.resetTimer();
+			}else if((50 - this.s3.light.raw) > 20){
+				Servo.right();
+				Time.sleep(32, () => {Green.verify(this);CrossPath.verify(this);});
+				Servo.stop();
+				Servo.foward(this.velocity);
+				Time.sleep(16, () => {Green.verify(this);CrossPath.verify(this);});
+				Time.resetTimer();
+			}else{
+				Servo.foward(this.velocity);
+				Security.verify(this);
+			}
+		}
+	
+		public void alignSensors(bool right = true){
+			if(right){
+				Servo.right();
+				while(!this.s2.hasLine()){}
+				Servo.rotate(-2f);
+			}else{
+				Servo.left();
+				while(!this.s3.hasLine()){}
+				Servo.rotate(2f);
+			}
 		}
 	}
-
-public static class CrossPath{
-		public static void findLineLeft(){
-
+	private static class CrossPath{
+		private static void notify(){
+			Buzzer.play(sTurnNotGreen);
+			Led.on(cTurnNotGreen);
 		}
-
-		public static void findLineRight(){
-
+	
+		public static void findLineLeft(ref Reflective refsensor_){
+			CrossPath.notify();
+			Log.clear();
+			Log.proc();
+			Degrees initialDefault = new Degrees(Gyroscope.x.raw - 75);
+			Degrees max = new Degrees(Gyroscope.x.raw - 80);
+			Servo.encoder(8f);
+			Servo.left();
+			while((!refsensor_.hasLine())){
+				if(Gyroscope.x % max){
+					max = new Degrees(Gyroscope.x.raw + 165);
+					Servo.encoder(-6f);
+					Servo.right();
+					while(true){
+						if(refsensor_.hasLine()){
+							return;
+						}
+						if (Gyroscope.x % max){
+							Servo.left();
+							while(!(Gyroscope.x % initialDefault)){}
+							Servo.stop();
+							return;
+						}
+					}
+				}
+			}
+			Servo.stop();
+			Servo.rotate(-2f);
 		}
-
-		public static void verify()
-		{
+	
+		public static void findLineRight(ref Reflective refsensor_){
+			CrossPath.notify();
+			Log.clear();
+			Log.proc();
+			Degrees initialDefault = new Degrees(Gyroscope.x.raw + 75);
+			Degrees max = new Degrees(Gyroscope.x.raw + 80);
+			Servo.encoder(8f);
+			Servo.right();
+			while(!refsensor_.hasLine()){
+				if(Gyroscope.x % max){
+					max = new Degrees(Gyroscope.x.raw - 165);
+					Servo.encoder(-6f);
+					Servo.left();
+					while (true){
+						if(refsensor_.hasLine()){
+							return;
+						}
+						if (Gyroscope.x % max){
+							Servo.right();
+							while(!(Gyroscope.x % initialDefault)){}
+							Servo.stop();
+							return;
+						}
+					}
+				}
+			}
+			Servo.stop();
+			Servo.rotate(2f);
+		}
+	
+		public static void verify(FloorRoute.FollowLine Follower){
+			if(Follower.s1.light.raw < 50 && !Follower.s1.isMat()){
+				findLineLeft(ref Follower.s2);
+				Time.resetTimer();
+			}else if(Follower.s4.light.raw < 50 && !Follower.s4.isMat()){
+				findLineRight(ref Follower.s3);
+				Time.resetTimer();
+			}
 		}
 	}
-
-	public class Green{
-		public static void findLineLeft(){
-
+	private class Green{
+	
+		private static void notify(){
+			Buzzer.play(sTurnGreen);
+			Led.on(cTurnGreen);
 		}
-
-		public static void findLineRight(){
-
+	
+		public static void findLineLeft(FloorRoute.FollowLine Follower){
+			Green.notify();
+			Log.clear();
+			Log.proc();
+			Servo.encoder(14f);
+			Servo.rotate(-20f);
+			Degrees maxLeft = new Degrees(Gyroscope.x.raw - 87);
+			Servo.left();
+			while((!Follower.s2.hasLine()) && (!(Gyroscope.x % maxLeft))){}
+			Servo.stop();
+			Servo.rotate(-2f);
 		}
-
-		public static void verify(){
-
+	
+		public static void findLineRight(FloorRoute.FollowLine Follower){
+			Green.notify();
+			Log.clear();
+			Log.proc();
+			Servo.encoder(14f);
+			Servo.rotate(20f);
+			Degrees maxRight = new Degrees(Gyroscope.x.raw + 87);
+			Servo.right();
+			while((!Follower.s3.hasLine()) && (!(Gyroscope.x % maxRight))){}
+			Servo.stop();
+			Servo.rotate(2f);
+		}
+	
+		public static void verify(FloorRoute.FollowLine Follower){
+			if(Follower.s1.rgb.hasGreen() || Follower.s2.rgb.hasGreen() || Follower.s3.rgb.hasGreen() || Follower.s4.rgb.hasGreen()){
+				Follower.alignSensors();
+				Time.sleep(32);
+				if(Follower.s1.rgb.hasGreen() || Follower.s2.rgb.hasGreen()){
+					findLineLeft(Follower);
+				}else if(Follower.s3.rgb.hasGreen() || Follower.s4.rgb.hasGreen()){
+					findLineRight(Follower);
+				}
+				Time.resetTimer();
+			}
 		}
 	}
-	public class Position{
-		public static void alignSensors(){
-
+	static private class Security{
+		public static void verify(FloorRoute.FollowLine Follower){
+			if((Time.timer.millis > 2000) && !Gyroscope.inPoint()){
+				Servo.backward(180);
+				while(!(Follower.s1.light.raw < 55) && !(Follower.s2.light.raw < 55) && !(Follower.s3.light.raw < 55) && !(Follower.s4.light.raw < 55)){}
+				Servo.stop();
+				Servo.encoder(-3);
+			}
 		}
 	}
-
 }
 
 /* --------------- General code --------------- */
 
-//Instance sensors ---------------------------------------------
-static Reflective s1 = new Reflective(1);
-static Reflective s2 = new Reflective(0);
+//Instances ---------------------------------------------
+static DegreesRange upRamp = new DegreesRange(330, 355);
+static DegreesRange downRamp = new DegreesRange(5, 30);
 
+static Reflective s1 = new Reflective(3), s2 = new Reflective(2), s3 = new Reflective(1), s4 = new Reflective(0);
+static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, ref s3, ref s4, 140);
 //Instance modules ---------------------------------------------
 
 
 //Setup program
 void setup(){
 	Actuator.alignUp();
+	Time.resetTimer();
 }
 
 //Main loop
 void loop(){
+	if((this.CurrentState & (byte)States.FOLLOWLINE) != 0){
+		mainFollow.proc();
+	} else if ((this.CurrentState & (byte)States.OBSTACLE) != 0){
 
-	if((CurrentState & (byte)States.FOLLOWLINE) != 0){
-	} else if ((CurrentState & (byte)States.OBSTACLE) != 0){
+	}else if ((this.CurrentState & (byte)States.UPRAMP) != 0){
 
-	}else if ((CurrentState & (byte)States.UPRAMP) != 0){
+	}else if ((this.CurrentState & (byte)States.DOWNRAMP) != 0){
 
-	}else if ((CurrentState & (byte)States.DOWNRAMP) != 0){
+	}else if ((this.CurrentState & (byte)States.RESCUERAMP) != 0){
 
-	}else if ((CurrentState & (byte)States.RESCUERAMP) != 0){
+	}else if ((this.CurrentState & (byte)States.RESCUE) != 0){
 
-	}else if ((CurrentState & (byte)States.RESCUE) != 0){
+	}else if ((this.CurrentState & (byte)States.RESCUEEXIT) != 0){
 
-	}else if ((CurrentState & (byte)States.RESCUEEXIT) != 0){
-
-	}else if ((CurrentState & (byte)States.NOP) != 0){
+	}else if ((this.CurrentState & (byte)States.NOP) != 0){
 	}
 }
 
 //----------------------------- Main ---------------------------------------//
 
-
 #if(false) //DEBUG MODE MAIN
 	void Main(){
+		mainFollow.alignSensors();
 	for(;;){
-		}
+	}
 	}
 #else //DEFAULT MAIN
 	void Main(){

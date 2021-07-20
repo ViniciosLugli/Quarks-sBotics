@@ -1,11 +1,5 @@
-//Private robot info. current robo-4:
-private const byte kLights = 3;//number of sensors
-private const byte kUltrassonics = 2;//number of sensors
-private const byte kRefreshRate = 31;//ms of refresh rate in color/light sensor
-//
-
 //Data ---------------------------------------------
-static byte CurrentState = 0b_0000_0001;//Init in followline
+byte CurrentState = 0b_0000_0001;//Init in followline
 
 enum States : byte {
     FOLLOWLINE = 1 << 0,
@@ -17,3 +11,10 @@ enum States : byte {
     RESCUEEXIT = 1 << 6,
     NOP = 1 << 7
 }
+
+static Sound sTurnNotGreen = new Sound("F2", 80);
+static Sound sTurnGreen = new Sound("C3", 60);
+
+static Color cFollowLine = new Color(255, 255, 255);
+static Color cTurnNotGreen = new Color(0, 0, 0);
+static Color cTurnGreen = new Color(0, 255, 0);

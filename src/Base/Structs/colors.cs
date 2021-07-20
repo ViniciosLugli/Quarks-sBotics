@@ -13,30 +13,24 @@ public struct Color{
 		get => new float[]{this.r, this.g, this.b};
 	}
 
-	public string toHex(){
-		string rs = Color.DecimalToHexadecimal((int)this.r);
-		string gs = Color.DecimalToHexadecimal((int)this.g);
-		string bs = Color.DecimalToHexadecimal((int)this.b);
-
-		return '#' + rs + gs + bs;
+	public bool hasGreen(){
+		float rgb = this.r + this.g + this.b;
+		byte pR = (byte)Calc.map(this.r, 0, rgb, 0, 100);
+		byte pG = (byte)Calc.map(this.g, 0, rgb, 0, 100);
+		byte pB = (byte)Calc.map(this.b, 0, rgb, 0, 100);
+		return ((pG > pR) && (pG > pB) && (pG > 65));
 	}
 
-	private static string DecimalToHexadecimal(int dec){
-		if (dec <= 0)
-			return "00";
-		int hex = dec;
-		string hexStr = string.Empty;
-		while (dec > 0){
-			hex = dec % 16;
+	public string toHex(){
+		float rgb = this.r + this.g + this.b;
+		byte pR = (byte)Calc.map(this.r, 0, rgb, 0, 255);
+		byte pG = (byte)Calc.map(this.g, 0, rgb, 0, 255);
+		byte pB = (byte)Calc.map(this.b, 0, rgb, 0, 255);
+		string rs = Calc.DecToHex((int)(pR));
+		string gs = Calc.DecToHex((int)(pG));
+		string bs = Calc.DecToHex((int)(pB));
 
-			if (hex < 10)
-				hexStr = hexStr.Insert(0, Convert.ToChar(hex + 48).ToString());
-			else
-				hexStr = hexStr.Insert(0, Convert.ToChar(hex + 55).ToString());
-
-			dec /= 16;
-		}
-		return hexStr;
+		return '#' + rs + gs + bs;
 	}
 
 	//Basic operators
@@ -56,6 +50,11 @@ public struct Light{
 	public float raw;
 	public float value {
 		get => decorator-raw;
+	}
+
+	public string toHex(){
+		string grayscaleHex = Calc.DecToHex((int)(this.raw));
+		return '#' + grayscaleHex + grayscaleHex + grayscaleHex;
 	}
 
 	//Basic operators

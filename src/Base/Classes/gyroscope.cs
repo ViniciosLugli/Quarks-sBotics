@@ -1,8 +1,8 @@
 import("Base/Structs/degrees.cs");
 
 public static class Gyroscope{
-	private static List<Degrees> UP_RAMP = new List<Degrees>(){new Degrees(330), new Degrees(355)};
-	private static List<Degrees> DOWN_RAMP = new List<Degrees>(){new Degrees(5), new Degrees(30)};
+
+	private static Degrees[] points = new Degrees[] {new Degrees(359),new Degrees(0), new Degrees(90), new Degrees(180), new Degrees(270)};
 
 	public static Degrees x {
 		get => new Degrees((float)bc.Compass());
@@ -11,8 +11,14 @@ public static class Gyroscope{
 		get => new Degrees((float)bc.Inclination());
 	}
 
-	public static bool isUpRamp() => (Gyroscope.z >= UP_RAMP[0]) && (Gyroscope.z <= UP_RAMP[1]);
-	public static bool isDownRamp() => (Gyroscope.z >= DOWN_RAMP[0]) && (Gyroscope.z <= DOWN_RAMP[1]);
+	public static bool inPoint(){
+		foreach(Degrees point in Gyroscope.points){
+			if(((Gyroscope.x.raw + 8) > point.raw) && (Gyroscope.x.raw - 8 < point.raw)){
+				return true;
+			}
+		}
+		return false;
+	}
 
 	public static void NOP(){
 		Log.clear();
