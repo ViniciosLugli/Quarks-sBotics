@@ -1,5 +1,6 @@
 //Base for robot and utils
 import("globalVariables.cs");
+import("Base/Types/basics.cs");
 import("Utils/calc.cs");
 import("Utils/consoleColors.cs");
 import("Base/Classes/console.cs");
@@ -62,7 +63,7 @@ void loop(){
 
 #if(false) //DEBUG MODE MAIN
 	void Main(){
-	test();
+		mainFollow.alignSensors();
 	for(;;){
 	}
 	}

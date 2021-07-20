@@ -10,7 +10,7 @@ public static class Servo{
 	public static void rotate(float angle, float velocity=500) => bc.MoveFrontalAngles(velocity, angle);
 	public static void rotate(Degrees angle, float velocity=500) => bc.MoveFrontalAngles(velocity, angle.raw);
 
-	public static void encoder(float rotations, float velocity=300) => bc.MoveFrontalRotations(velocity, rotations);
+	public static void encoder(float rotations, float velocity=300) => bc.MoveFrontalRotations(rotations > 0 ? velocity : -velocity, Math.Abs(rotations));
 
 	public static float speed() => bc.RobotSpeed();
 

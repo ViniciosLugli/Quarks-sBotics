@@ -1,10 +1,4 @@
 //Base for robot and utils
-//Private robot info. current robo-3:
-private const byte kLights = 3;//number of sensors
-private const byte kUltrassonics = 2;//number of sensors
-private const byte kRefreshRate = 31;//ms of refresh rate in color/light sensor
-//
-
 //Data ---------------------------------------------
 byte CurrentState = 0b_0000_0001;//Init in followline
 
@@ -25,6 +19,7 @@ static Sound sTurnGreen = new Sound("C3", 60);
 static Color cFollowLine = new Color(255, 255, 255);
 static Color cTurnNotGreen = new Color(0, 0, 0);
 static Color cTurnGreen = new Color(0, 255, 0);
+public delegate void MethodHandler();
 class Calc{
 	public static float constrain(float amt,float low,float high) => ((amt)<(low)?(low):((amt)>(high)?(high):(amt)));
 
@@ -64,6 +59,12 @@ public static class Log{
 	public static void clear() => bc.ClearConsole();
 }
 public static class Robot{
+	//Private robot info. current robo-3:
+	public const byte kLights = 3;//number of sensors
+	public const byte kUltrassonics = 2;//number of sensors
+	public const byte kRefreshRate = 31;//ms of refresh rate in color/light sensor
+	//
+
 	public static void throwError(object message) => bc.RobotError(message.ToString());
 	public static void throwError() => bc.RobotError();
 	public static void endCode() => bc.CodeEnd();
@@ -109,6 +110,10 @@ public static class Time{
 	public static void resetTimer() => bc.ResetTimer();
 
 	public static void sleep(int ms) => bc.Wait(ms);
+	public static void sleep(int ms, MethodHandler callwhile) {
+		int toWait = Time.current.millis + ms;
+		while (Time.current.millis < toWait){callwhile();}
+	}
 	public static void sleep(Clock clock) => bc.Wait(clock.millis);
 };
 public struct Action{
@@ -238,11 +243,23 @@ private struct DegreesRange{
 }
 
 public static class Gyroscope{
+
+	private static Degrees[] points = new Degrees[] {new Degrees(0), new Degrees(90), new Degrees(180), new Degrees(270)};
+
 	public static Degrees x {
 		get => new Degrees((float)bc.Compass());
 	}
 	public static Degrees z {
 		get => new Degrees((float)bc.Inclination());
+	}
+
+	public static bool inPoint(){
+		foreach(Degrees point in Gyroscope.points){
+			if((Gyroscope.x.raw + 8 > point.raw) && (Gyroscope.x.raw - 8 < point.raw)){
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static void NOP(){
@@ -342,7 +359,9 @@ public class Reflective{
 				bc.ReturnBlue((int)this.SensorIndex)
 			);
 	}
-	public bool hasLine() => bc.ReturnRed((int)this.SensorIndex) < 26;
+	public bool hasLine() => bc.ReturnRed((int)this.SensorIndex) < 35 && bc.ReturnGreen((int)this.SensorIndex) < 35;
+
+	public bool isMat() => bc.ReturnRed((int)this.SensorIndex) > 65;
 
 	public bool isColored() => bc.ReturnRed((int)this.SensorIndex) != bc.ReturnBlue((int)this.SensorIndex);
 
@@ -495,7 +514,7 @@ public static class Servo{
 	public static void rotate(float angle, float velocity=500) => bc.MoveFrontalAngles(velocity, angle);
 	public static void rotate(Degrees angle, float velocity=500) => bc.MoveFrontalAngles(velocity, angle.raw);
 
-	public static void encoder(float rotations, float velocity=300) => bc.MoveFrontalRotations(velocity, rotations);
+	public static void encoder(float rotations, float velocity=300) => bc.MoveFrontalRotations(rotations > 0 ? velocity : -velocity, Math.Abs(rotations));
 
 	public static float speed() => bc.RobotSpeed();
 
@@ -514,56 +533,77 @@ public static class FloorRoute{
 			this.velocity = velocity_;
 		}
 	
-		private Reflective s1, s2;
+		public Reflective s1, s2;
 		private int velocity = 0;
 	
 		private void debugSensors(){
 			Log.info(Formatter.parse($"{this.s1.light.raw} | {this.s2.light.raw}", new string[]{"align=center", "color=#FFEA79", "b"}));
-			Log.debug($"{Formatter.parse("--", new string[]{$"mark={this.s1.light.toHex()}"})} | {Formatter.parse("--", new string[]{$"mark={this.s2.light.toHex()}"})}");
 		}
 	
 		public void proc(){
 			Log.proc();
 			this.debugSensors();
-			Green.verify(ref this.s1, ref this.s2);
-			if(this.s1.rgb.r < 52 || this.s1.light.raw < 55){
+			Green.verify(this);
+			if((this.s1.light.raw < 50) && !this.s1.isMat()){
 				Servo.left();
 				Time.resetTimer();
-				while(this.s1.rgb.r < 52 || this.s1.light.raw < 55){
-					Green.verify(ref this.s1, ref this.s2);
-					if(Time.timer.millis > 128){
+				while(this.s1.rgb.r < 60){
+					Green.verify(this);
+					if(Time.timer.millis > 112){
+						Green.verify(this);
+						if(Gyroscope.inPoint() && CrossPath.verify(this.s1)){
+							CrossPath.findLineLeft(ref this.s1);
+						}
 						break;
 					}
 				}
-				Time.sleep(16);
+				Time.sleep(48, () => Green.verify(this));
 				Servo.foward(this.velocity);
-				Time.sleep(16);
+				Time.sleep(32, () => Green.verify(this));
 				Servo.stop();
-				Time.sleep(kRefreshRate - 16);
-				if (CrossPath.verify(this.s1)){
-					CrossPath.findLineLeft(ref this.s2);
+				Time.sleep(Robot.kRefreshRate - 16, () => Green.verify(this));
+				Green.verify(this);
+				if(CrossPath.verify(this.s1)){
+					CrossPath.findLineLeft(ref this.s1);
 				}
-				Green.verify(ref this.s1, ref this.s2);
-			}else if(this.s2.rgb.r < 52 || this.s2.light.raw < 55){
+				Green.verify(this);
+			}else if((this.s2.light.raw < 50) && !this.s2.isMat()){
 				Servo.right();
 				Time.resetTimer();
-				while(this.s2.rgb.r < 52 || this.s2.light.raw < 55){
-					Green.verify(ref this.s1, ref this.s2);
-					if (Time.timer.millis > 128){
+				while(this.s2.rgb.r < 60){
+					Green.verify(this);
+					if(Time.timer.millis > 112){
+						Green.verify(this);
+						if(Gyroscope.inPoint() && CrossPath.verify(this.s2)){
+							CrossPath.findLineRight(ref this.s2);
+						}
 						break;
 					}
 				}
-				Time.sleep(16);
+				Time.sleep(48, () => Green.verify(this));
 				Servo.foward(this.velocity);
-				Time.sleep(16);
+				Time.sleep(32, () => Green.verify(this));
 				Servo.stop();
-				Time.sleep(kRefreshRate - 16);
-				if (CrossPath.verify(this.s2)){
-					CrossPath.findLineRight(ref this.s1);
+				Time.sleep(Robot.kRefreshRate - 16, () => Green.verify(this));
+				Green.verify(this);
+				if(CrossPath.verify(this.s2)){
+					CrossPath.findLineRight(ref this.s2);
 				}
-				Green.verify(ref this.s1, ref this.s2);
+				Green.verify(this);
 			}else{
 				Servo.foward(this.velocity);
+			}
+		}
+	
+		public void alignSensors(bool right = true){
+			if(right){
+				Servo.right();
+				while(!this.s1.hasLine()){}
+				Servo.rotate(-4.5f);
+			}else{
+				Servo.left();
+				while(!this.s2.hasLine()){}
+				Servo.rotate(4.5f);
 			}
 		}
 	}
@@ -577,27 +617,67 @@ public static class FloorRoute{
 			CrossPath.notify();
 			Log.clear();
 			Log.proc();
-			Degrees maxLeft = new Degrees(Gyroscope.x.raw - 80);
+			Degrees initialDefault = new Degrees(Gyroscope.x.raw - 75);
+			Degrees max = new Degrees(Gyroscope.x.raw - 80);
 			Servo.encoder(8f);
 			Servo.left();
-			while((!refsensor_.hasLine()) && (!(Gyroscope.x % maxLeft))){}
+			while((!refsensor_.hasLine())){
+				if(Gyroscope.x % max){
+					max = new Degrees(Gyroscope.x.raw + 165);
+					Servo.encoder(-6f);
+					Servo.right();
+					while(true){
+						if(refsensor_.hasLine()){
+							Servo.rotate(-17);
+							Servo.encoder(5f);
+							return;
+						}
+						if (Gyroscope.x % max){
+							Servo.left();
+							while(!(Gyroscope.x % initialDefault)){}
+							Servo.stop();
+							return;
+						}
+					}
+				}
+			}
 			Servo.stop();
-			Servo.rotate(2f);
+			Servo.rotate(-5f);
 		}
 	
 		public static void findLineRight(ref Reflective refsensor_){
 			CrossPath.notify();
 			Log.clear();
 			Log.proc();
-			Degrees maxRight = new Degrees(Gyroscope.x.raw + 80);
+			Degrees initialDefault = new Degrees(Gyroscope.x.raw + 75);
+			Degrees max = new Degrees(Gyroscope.x.raw + 80);
 			Servo.encoder(8f);
 			Servo.right();
-			while((!refsensor_.hasLine()) && (!(Gyroscope.x % maxRight))){}
+			while(!refsensor_.hasLine()){
+				if(Gyroscope.x % max){
+					max = new Degrees(Gyroscope.x.raw - 165);
+					Servo.encoder(-6f);
+					Servo.left();
+					while (true){
+						if(refsensor_.hasLine()){
+							Servo.rotate(17);
+							Servo.encoder(5f);
+							return;
+						}
+						if (Gyroscope.x % max){
+							Servo.right();
+							while(!(Gyroscope.x % initialDefault)){}
+							Servo.stop();
+							return;
+						}
+					}
+				}
+			}
 			Servo.stop();
-			Servo.rotate(-2f);
+			Servo.rotate(5f);
 		}
 	
-		public static bool verify(Reflective tsensor) => tsensor.light.raw < 45 || tsensor.rgb.r < 25;
+		public static bool verify(Reflective tsensor) => tsensor.light.raw < 45 && !tsensor.isMat();
 	}
 	public class Green{
 	
@@ -611,7 +691,7 @@ public static class FloorRoute{
 			Log.clear();
 			Log.proc();
 			Servo.encoder(14f);
-			Servo.rotate(-30f);
+			Servo.rotate(-20f);
 			Degrees maxLeft = new Degrees(Gyroscope.x.raw - 87);
 			Servo.left();
 			while((!refsensor_.hasLine()) && (!(Gyroscope.x % maxLeft))){}
@@ -624,7 +704,7 @@ public static class FloorRoute{
 			Log.clear();
 			Log.proc();
 			Servo.encoder(14f);
-			Servo.rotate(30f);
+			Servo.rotate(20f);
 			Degrees maxRight = new Degrees(Gyroscope.x.raw + 87);
 			Servo.right();
 			while((!refsensor_.hasLine()) && (!(Gyroscope.x % maxRight))){}
@@ -632,20 +712,16 @@ public static class FloorRoute{
 			Servo.rotate(3f);
 		}
 	
-		public static void verify(ref Reflective refs1_, ref Reflective refs2_){
-			if(refs1_.rgb.hasGreen() || refs2_.rgb.hasGreen()){
-				Position.alignSensors();
+		public static void verify(FloorRoute.FollowLine Follower){
+			if(Follower.s1.rgb.hasGreen() || Follower.s2.rgb.hasGreen()){
+				Follower.alignSensors();
 				Time.sleep(32);
-				if(refs1_.rgb.hasGreen()){
-					findLineLeft(ref refs1_);
-				}else if(refs2_.rgb.hasGreen()){
-					findLineRight(ref refs2_);
+				if(Follower.s1.rgb.hasGreen()){
+					findLineLeft(ref Follower.s1);
+				}else if(Follower.s2.rgb.hasGreen()){
+					findLineRight(ref Follower.s2);
 				}
 			}
-		}
-	}
-	public class Position{
-		public static void alignSensors(){
 		}
 	}
 }
@@ -691,7 +767,7 @@ void loop(){
 
 #if(false) //DEBUG MODE MAIN
 	void Main(){
-	test();
+		mainFollow.alignSensors();
 	for(;;){
 	}
 	}

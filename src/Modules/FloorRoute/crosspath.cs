@@ -8,25 +8,65 @@ public static class CrossPath{
 		CrossPath.notify();
 		Log.clear();
 		Log.proc();
-		Degrees maxLeft = new Degrees(Gyroscope.x.raw - 80);
+		Degrees initialDefault = new Degrees(Gyroscope.x.raw - 75);
+		Degrees max = new Degrees(Gyroscope.x.raw - 80);
 		Servo.encoder(8f);
 		Servo.left();
-		while((!refsensor_.hasLine()) && (!(Gyroscope.x % maxLeft))){}
+		while((!refsensor_.hasLine())){
+			if(Gyroscope.x % max){
+				max = new Degrees(Gyroscope.x.raw + 165);
+				Servo.encoder(-6f);
+				Servo.right();
+				while(true){
+					if(refsensor_.hasLine()){
+						Servo.rotate(-17);
+						Servo.encoder(5f);
+						return;
+					}
+					if (Gyroscope.x % max){
+						Servo.left();
+						while(!(Gyroscope.x % initialDefault)){}
+						Servo.stop();
+						return;
+					}
+				}
+			}
+		}
 		Servo.stop();
-		Servo.rotate(2f);
+		Servo.rotate(-5f);
 	}
 
 	public static void findLineRight(ref Reflective refsensor_){
 		CrossPath.notify();
 		Log.clear();
 		Log.proc();
-		Degrees maxRight = new Degrees(Gyroscope.x.raw + 80);
+		Degrees initialDefault = new Degrees(Gyroscope.x.raw + 75);
+		Degrees max = new Degrees(Gyroscope.x.raw + 80);
 		Servo.encoder(8f);
 		Servo.right();
-		while((!refsensor_.hasLine()) && (!(Gyroscope.x % maxRight))){}
+		while(!refsensor_.hasLine()){
+			if(Gyroscope.x % max){
+				max = new Degrees(Gyroscope.x.raw - 165);
+				Servo.encoder(-6f);
+				Servo.left();
+				while (true){
+					if(refsensor_.hasLine()){
+						Servo.rotate(17);
+						Servo.encoder(5f);
+						return;
+					}
+					if (Gyroscope.x % max){
+						Servo.right();
+						while(!(Gyroscope.x % initialDefault)){}
+						Servo.stop();
+						return;
+					}
+				}
+			}
+		}
 		Servo.stop();
-		Servo.rotate(-2f);
+		Servo.rotate(5f);
 	}
 
-	public static bool verify(Reflective tsensor) => tsensor.light.raw < 45 || tsensor.rgb.r < 25;
+	public static bool verify(Reflective tsensor) => tsensor.light.raw < 45 && !tsensor.isMat();
 }
