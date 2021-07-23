@@ -6,8 +6,4 @@ public struct Sound{
 
 	public string note;
 	public int time;
-
-	//Basic operators
-	public static bool operator ==(Sound a, Sound b) => a.note == b.note;
-	public static bool operator !=(Sound a, Sound b) => a.note != b.note;
 }

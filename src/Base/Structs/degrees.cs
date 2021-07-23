@@ -10,8 +10,6 @@ public struct Degrees{
 	public static bool operator <(Degrees a, Degrees b) => a.raw < b.raw;
 	public static bool operator >=(Degrees a, Degrees b) => a.raw >= b.raw;
 	public static bool operator <=(Degrees a, Degrees b) => a.raw <= b.raw;
-	public static bool operator ==(Degrees a, Degrees b) => a.raw == b.raw;
-	public static bool operator !=(Degrees a, Degrees b) => a.raw != b.raw;
 	public static float operator -(Degrees a, Degrees b) => ((a.raw - b.raw) + 360) % 360;
 	public static float operator +(Degrees a, Degrees b) => ((a.raw + b.raw) + 360) % 360;
 	public static float operator *(Degrees a, Degrees b) => ((a.raw * b.raw) + 360) % 360;
@@ -26,5 +24,5 @@ private struct DegreesRange{
 	}
 	public Degrees min, max;
 
-	public bool isOnRange(byte offset = 0) => (Gyroscope.z >= this.min) && (Gyroscope.z <= this.max);
+	public bool isOnRange(Degrees currentGyro) => (currentGyro > this.min) && (currentGyro < this.max);
 }

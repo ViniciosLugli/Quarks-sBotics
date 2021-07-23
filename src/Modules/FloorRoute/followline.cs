@@ -8,10 +8,11 @@ public class FollowLine{
 	}
 
 	public Reflective s1, s2, s3, s4;
-	private int velocity = 0;
+	public int velocity = 0;
 
 	private void debugSensors(){
 		Log.info(Formatter.parse($"{this.s1.light.raw} | {this.s2.light.raw} | {this.s3.light.raw} | {this.s4.light.raw}", new string[]{"align=center", "color=#FFEA79", "b"}));
+		Led.on(cFollowLine);
 	}
 
 	public void proc(){
@@ -19,14 +20,14 @@ public class FollowLine{
 		this.debugSensors();
 		Green.verify(this);
 		CrossPath.verify(this);
-		if((50 - this.s2.light.raw) > 20){
+		if((50 - this.s2.light.raw) > 16 && !this.s2.isColored()){
 			Servo.left();
 			Time.sleep(32, () => {Green.verify(this);CrossPath.verify(this);});
 			Servo.stop();
 			Servo.foward(this.velocity);
 			Time.sleep(16, () => {Green.verify(this);CrossPath.verify(this);});
 			Time.resetTimer();
-		}else if((50 - this.s3.light.raw) > 20){
+		}else if((50 - this.s3.light.raw) > 16 && !this.s3.isColored()){
 			Servo.right();
 			Time.sleep(32, () => {Green.verify(this);CrossPath.verify(this);});
 			Servo.stop();
@@ -39,15 +40,21 @@ public class FollowLine{
 		}
 	}
 
-	public void alignSensors(bool right = true){
-		if(right){
+	public void alignSensors(){
+		if(this.s2.light > this.s3.light){
+			while(this.s2.light.raw < 45){Servo.left();}
 			Servo.right();
-			while(!this.s2.hasLine()){}
-			Servo.rotate(-2f);
-		}else{
+			while(this.s2.light.raw > 45){}
 			Servo.left();
-			while(!this.s3.hasLine()){}
-			Servo.rotate(2f);
+			Time.sleep(32);
+			Servo.stop();
+		}else{
+			while(this.s3.light.raw < 45){Servo.right();}
+			Servo.left();
+			while(this.s3.light.raw > 45){}
+			Servo.right();
+			Time.sleep(32);
+			Servo.stop();
 		}
 	}
 }

@@ -3,4 +3,5 @@ public static class FloorRoute{
 	import("Modules/FloorRoute/crosspath.cs");
 	import("Modules/FloorRoute/green.cs");
 	import("Modules/FloorRoute/security.cs");
+	import("Modules/FloorRoute/obstacle.cs");
 }

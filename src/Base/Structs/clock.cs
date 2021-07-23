@@ -18,8 +18,6 @@ public struct Clock{
 	public static bool operator <(Clock a, Clock b) => a.millis < b.millis;
 	public static bool operator >=(Clock a, Clock b) => a.millis >= b.millis;
 	public static bool operator <=(Clock a, Clock b) => a.millis <= b.millis;
-	public static bool operator ==(Clock a, Clock b) => a.millis == b.millis;
-	public static bool operator !=(Clock a, Clock b) => a.millis != b.millis;
 	public static int operator -(Clock a, Clock b) => a.millis - b.millis;
 	public static int operator -(Clock a, int b) => a.millis - b;
 	public static int operator +(Clock a, Clock b) => a.millis + b.millis;

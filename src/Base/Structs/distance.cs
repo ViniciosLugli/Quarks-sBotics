@@ -12,8 +12,6 @@ public struct Distance{
 	public static bool operator <(Distance a, Distance b) => a.raw < b.raw;
 	public static bool operator >=(Distance a, Distance b) => a.raw >= b.raw;
 	public static bool operator <=(Distance a, Distance b) => a.raw <= b.raw;
-	public static bool operator ==(Distance a, Distance b) => a.raw == b.raw;
-	public static bool operator !=(Distance a, Distance b) => a.raw != b.raw;
 	public static float operator -(Distance a, Distance b) => a.raw - b.raw;
 	public static float operator +(Distance a, Distance b) => a.raw + b.raw;
 	public static float operator *(Distance a, Distance b) => a.raw * b.raw;
