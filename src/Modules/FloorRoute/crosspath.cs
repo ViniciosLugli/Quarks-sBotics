@@ -10,7 +10,7 @@ private static class CrossPath{
 		Log.proc();
 		Degrees initialDefault = new Degrees(Gyroscope.x.raw - 80);
 		Degrees max = new Degrees(Gyroscope.x.raw - 100);
-		Servo.encoder(9f);
+		Servo.encoder(7f);
 		Servo.left();
 		while((!refsensor_.hasLine())){
 			if(Gyroscope.x % max){
@@ -19,7 +19,6 @@ private static class CrossPath{
 				Servo.right();
 				while(true){
 					if(refsensor_.hasLine()){
-						Servo.rotate(2f);
 						return;
 					}
 					if (Gyroscope.x % max){
@@ -32,7 +31,6 @@ private static class CrossPath{
 			}
 		}
 		Servo.stop();
-		Servo.rotate(1f);
 	}
 
 	public static void findLineRight(ref Reflective refsensor_){
@@ -41,7 +39,7 @@ private static class CrossPath{
 		Log.proc();
 		Degrees initialDefault = new Degrees(Gyroscope.x.raw + 80);
 		Degrees max = new Degrees(Gyroscope.x.raw + 100);
-		Servo.encoder(9f);
+		Servo.encoder(7f);
 		Servo.right();
 		while(!refsensor_.hasLine()){
 			if(Gyroscope.x % max){
@@ -50,7 +48,6 @@ private static class CrossPath{
 				Servo.left();
 				while (true){
 					if(refsensor_.hasLine()){
-						Servo.rotate(-2f);
 						return;
 					}
 					if (Gyroscope.x % max){
@@ -63,7 +60,6 @@ private static class CrossPath{
 			}
 		}
 		Servo.stop();
-		Servo.rotate(-1f);
 	}
 
 	public static void verify(FloorRoute.FollowLine Follower){
@@ -71,9 +67,9 @@ private static class CrossPath{
 			if (Green.verify(Follower)) { Time.resetTimer(); return; }
 			findLineLeft(ref Follower.s3);
 			Time.resetTimer();
-		}else if(Follower.s4.light.raw < 52 && !Follower.s4.isMat()){
+		}else if(Follower.s5.light.raw < 52 && !Follower.s5.isMat()){
 			if (Green.verify(Follower)) { Time.resetTimer(); return; }
-			findLineRight(ref Follower.s2);
+			findLineRight(ref Follower.s3);
 			Time.resetTimer();
 		}
 	}

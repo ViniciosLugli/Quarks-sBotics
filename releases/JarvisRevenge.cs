@@ -57,10 +57,10 @@ public static class Log{
 }
 public static class Robot{
 	//Private robot info. current robo-3:
-	public const byte kLights = 5;//number of sensors
+	public const byte kLights = 6;//number of sensors
 	public const byte kUltrassonics = 3;//number of sensors
-	public const byte kRefreshRate = 63;//ms of refresh rate in color/light sensor
-	public const byte ksize = 56;
+	public const byte kRefreshRate = 75;//ms of refresh rate in color/light sensor
+	public const byte ksize = 55;
 	//
 
 	public static void throwError(object message) => bc.RobotError(message.ToString());
@@ -589,19 +589,20 @@ public struct Vector2{
 //Modules for competition challenges
 public static class FloorRoute{
 	public class FollowLine{
-		public FollowLine(ref Reflective refs1_, ref Reflective refs2_, ref Reflective refs3_, ref Reflective refs4_, int velocity_){
+		public FollowLine(ref Reflective refs1_, ref Reflective refs2_, ref Reflective refs3_, ref Reflective refs4_, ref Reflective refs5_, int velocity_){
 			this.s1 = refs1_;
 			this.s2 = refs2_;
 			this.s3 = refs3_;
 			this.s4 = refs4_;
+			this.s5 = refs5_;
 			this.velocity = velocity_;
 		}
 	
-		public Reflective s1, s2, s3, s4;
+		public Reflective s1, s2, s3, s4, s5;
 		public int velocity = 0;
 	
 		private void debugSensors(){
-			Log.info(Formatter.parse($"{this.s1.light.raw} | {this.s2.light.raw} | {this.s3.light.raw} | {this.s4.light.raw}", new string[]{"align=center", "color=#FFEA79", "b"}));
+			Log.info(Formatter.parse($"{this.s1.light.raw} | {this.s2.light.raw} | {this.s3.light.raw} | {this.s4.light.raw} | {this.s5.light.raw}", new string[]{"align=center", "color=#FFEA79", "b"}));
 			Led.on(cFollowLine);
 		}
 	
@@ -610,19 +611,21 @@ public static class FloorRoute{
 			this.debugSensors();
 			Green.verify(this);
 			CrossPath.verify(this);
-			if((50 - this.s2.light.raw) > 16 && !this.s2.isColored()){
+			if(this.s2.light.raw < 52 && !this.s2.isColored()){
 				Servo.left();
-				Time.sleep(32, () => {Green.verify(this);CrossPath.verify(this);});
+				while(this.s3.light.raw > 50){Green.verify(this);CrossPath.verify(this);}
+				Time.sleep(48, () => {Green.verify(this);CrossPath.verify(this);});
 				Servo.stop();
 				Servo.foward(this.velocity);
-				Time.sleep(16, () => {Green.verify(this);CrossPath.verify(this);});
+				Time.sleep(32, () => {Green.verify(this);CrossPath.verify(this);});
 				Time.resetTimer();
-			}else if((50 - this.s3.light.raw) > 16 && !this.s3.isColored()){
+			}else if(this.s4.light.raw < 52 && !this.s4.isColored()){
 				Servo.right();
-				Time.sleep(32, () => {Green.verify(this);CrossPath.verify(this);});
+				while(this.s3.light.raw > 50){Green.verify(this);CrossPath.verify(this);}
+				Time.sleep(48, () => {Green.verify(this);CrossPath.verify(this);});
 				Servo.stop();
 				Servo.foward(this.velocity);
-				Time.sleep(16, () => {Green.verify(this);CrossPath.verify(this);});
+				Time.sleep(32, () => {Green.verify(this);CrossPath.verify(this);});
 				Time.resetTimer();
 			}else{
 				Servo.foward(this.velocity);
@@ -631,18 +634,14 @@ public static class FloorRoute{
 		}
 	
 		public void alignSensors(){
-			if(this.s2.light > this.s3.light){
-				while(this.s2.light.raw < 45){Servo.left();}
-				Servo.right();
-				while(this.s2.light.raw > 45){}
+			if(this.s2.light > this.s4.light){
 				Servo.left();
+				while(this.s3.light.raw < 50){}
 				Time.sleep(32);
 				Servo.stop();
 			}else{
-				while(this.s3.light.raw < 45){Servo.right();}
-				Servo.left();
-				while(this.s3.light.raw > 45){}
 				Servo.right();
+				while(this.s3.light.raw < 50){}
 				Time.sleep(32);
 				Servo.stop();
 			}
@@ -660,7 +659,7 @@ public static class FloorRoute{
 			Log.proc();
 			Degrees initialDefault = new Degrees(Gyroscope.x.raw - 80);
 			Degrees max = new Degrees(Gyroscope.x.raw - 100);
-			Servo.encoder(9f);
+			Servo.encoder(7f);
 			Servo.left();
 			while((!refsensor_.hasLine())){
 				if(Gyroscope.x % max){
@@ -669,7 +668,6 @@ public static class FloorRoute{
 					Servo.right();
 					while(true){
 						if(refsensor_.hasLine()){
-							Servo.rotate(2f);
 							return;
 						}
 						if (Gyroscope.x % max){
@@ -682,7 +680,6 @@ public static class FloorRoute{
 				}
 			}
 			Servo.stop();
-			Servo.rotate(1f);
 		}
 	
 		public static void findLineRight(ref Reflective refsensor_){
@@ -691,7 +688,7 @@ public static class FloorRoute{
 			Log.proc();
 			Degrees initialDefault = new Degrees(Gyroscope.x.raw + 80);
 			Degrees max = new Degrees(Gyroscope.x.raw + 100);
-			Servo.encoder(9f);
+			Servo.encoder(7f);
 			Servo.right();
 			while(!refsensor_.hasLine()){
 				if(Gyroscope.x % max){
@@ -700,7 +697,6 @@ public static class FloorRoute{
 					Servo.left();
 					while (true){
 						if(refsensor_.hasLine()){
-							Servo.rotate(-2f);
 							return;
 						}
 						if (Gyroscope.x % max){
@@ -713,7 +709,6 @@ public static class FloorRoute{
 				}
 			}
 			Servo.stop();
-			Servo.rotate(-1f);
 		}
 	
 		public static void verify(FloorRoute.FollowLine Follower){
@@ -721,9 +716,9 @@ public static class FloorRoute{
 				if (Green.verify(Follower)) { Time.resetTimer(); return; }
 				findLineLeft(ref Follower.s3);
 				Time.resetTimer();
-			}else if(Follower.s4.light.raw < 52 && !Follower.s4.isMat()){
+			}else if(Follower.s5.light.raw < 52 && !Follower.s5.isMat()){
 				if (Green.verify(Follower)) { Time.resetTimer(); return; }
-				findLineRight(ref Follower.s2);
+				findLineRight(ref Follower.s3);
 				Time.resetTimer();
 			}
 		}
@@ -750,11 +745,11 @@ public static class FloorRoute{
 		private static void findLineLeft(FloorRoute.FollowLine Follower){
 			Log.clear();
 			Log.proc();
-			Servo.encoder(11f);
+			Servo.encoder(8f);
 			Servo.rotate(-15f);
 			Degrees maxLeft = new Degrees(Gyroscope.x.raw - 88);
 			Servo.left();
-			while((!Follower.s2.hasLine()) && (!(Gyroscope.x % maxLeft))){}
+			while((!Follower.s3.hasLine()) && (!(Gyroscope.x % maxLeft))){}
 			Servo.stop();
 			Servo.rotate(-2f);
 		}
@@ -762,7 +757,7 @@ public static class FloorRoute{
 		private static void findLineRight(FloorRoute.FollowLine Follower){
 			Log.clear();
 			Log.proc();
-			Servo.encoder(11f);
+			Servo.encoder(8f);
 			Servo.rotate(15f);
 			Degrees maxRight = new Degrees(Gyroscope.x.raw + 88);
 			Servo.right();
@@ -775,7 +770,7 @@ public static class FloorRoute{
 			Clock bTimer = new Clock(Time.current.millis + 256);
 			Servo.foward(Follower.velocity);
 			while(bTimer > Time.current){
-				if((Follower.s1.light.raw < 52 && !Follower.s1.isColored()) || (Follower.s2.light.raw < 52 && !Follower.s2.isColored()) || (Follower.s1.light.raw < 52 && !Follower.s3.isColored()) || (Follower.s4.light.raw < 52 && !Follower.s2.isColored())){
+				if((Follower.s1.light.raw < 52 && !Follower.s1.isColored()) || (Follower.s2.light.raw < 52 && !Follower.s2.isColored()) || (Follower.s4.light.raw < 52 && !Follower.s4.isColored()) || (Follower.s5.light.raw < 52 && !Follower.s5.isColored())){
 					Servo.stop();
 					Green.notifyGreen();
 					callback();
@@ -787,17 +782,17 @@ public static class FloorRoute{
 		}
 	
 		public static bool verify(FloorRoute.FollowLine Follower){
-			if(Follower.s1.rgb.hasGreen() || Follower.s2.rgb.hasGreen() || Follower.s3.rgb.hasGreen() || Follower.s4.rgb.hasGreen()){
+			if(Follower.s1.rgb.hasGreen() || Follower.s2.rgb.hasGreen() || Follower.s3.rgb.hasGreen()  || Follower.s4.rgb.hasGreen() || Follower.s5.rgb.hasGreen()){
 				Follower.alignSensors();
 				Time.sleep(32);
 	
-				if((Follower.s1.rgb.hasGreen() || Follower.s2.rgb.hasGreen()) && (Follower.s3.rgb.hasGreen() || Follower.s4.rgb.hasGreen())){
+				if((Follower.s1.rgb.hasGreen() || Follower.s2.rgb.hasGreen()) && (Follower.s4.rgb.hasGreen() || Follower.s5.rgb.hasGreen())){
 					Green.confirm(Follower, () => Green.findLineBack(Follower));
 	
 				}else if(Follower.s1.rgb.hasGreen() || Follower.s2.rgb.hasGreen()){
 					Green.confirm(Follower, () => Green.findLineLeft(Follower));
 	
-				}else if(Follower.s3.rgb.hasGreen() || Follower.s4.rgb.hasGreen()){
+				}else if(Follower.s4.rgb.hasGreen() || Follower.s5.rgb.hasGreen()){
 					Green.confirm(Follower, () => Green.findLineRight(Follower));
 				}
 				Time.resetTimer();
@@ -808,12 +803,8 @@ public static class FloorRoute{
 	}
 	static private class Security{
 		public static void verify(FloorRoute.FollowLine Follower){
-			if(Time.timer.millis > (2800 - (Follower.velocity * 10))){
-				if(Gyroscope.inPoint()){
-					Security.checkInLine(Follower, () => Security.backToLine(Follower));
-				}else{
-					Security.backToLine(Follower);
-				}
+			if((Time.timer.millis > (2800 - (Follower.velocity * 10))) && Follower.s3.light.raw > 55){
+				Security.backToLine(Follower);
 				Time.resetTimer();
 			}
 		}
@@ -823,16 +814,6 @@ public static class FloorRoute{
 			while(!(Follower.s1.light.raw < 55) && !(Follower.s2.light.raw < 55) && !(Follower.s3.light.raw < 55) && !(Follower.s4.light.raw < 55)){}
 			Servo.stop();
 			Servo.encoder(-3);
-		}
-	
-		private static void checkInLine(FloorRoute.FollowLine Follower, MethodHandler callback){
-			Servo.rotate(1.5f);
-			if(!(Follower.s1.light.raw < 55) && !(Follower.s2.light.raw < 55) && !(Follower.s3.light.raw < 55) && !(Follower.s4.light.raw < 55)){
-				Servo.rotate(-1.5f);
-				callback();
-			}else{
-				Servo.rotate(-1.5f);
-			}
 		}
 	}
 	public class Obstacle{
@@ -920,19 +901,20 @@ public class RescueRoute{
 		public static void exportClearLines() => bc.WriteText($"[CLEARLINES]()");
 	}
 	public class RampFollowLine{
-		public RampFollowLine(ref Reflective refs1_, ref Reflective refs2_, ref Reflective refs3_, ref Reflective refs4_, int velocity_){
+		public RampFollowLine(ref Reflective refs1_, ref Reflective refs2_, ref Reflective refs3_, ref Reflective refs4_, ref Reflective refs5_, int velocity_){
 			this.s1 = refs1_;
 			this.s2 = refs2_;
 			this.s3 = refs3_;
 			this.s4 = refs4_;
+			this.s5 = refs5_;
 			this.velocity = velocity_;
 		}
 	
-		public Reflective s1, s2, s3, s4;
+		public Reflective s1, s2, s3, s4, s5;
 		public int velocity = 0;
 	
 		private void debugSensors(){
-			Log.info(Formatter.parse($"{this.s1.light.raw} | {this.s2.light.raw} | {this.s3.light.raw} | {this.s4.light.raw}", new string[] { "align=center", "color=#FFEA79", "b" }));
+			Log.info(Formatter.parse($"{this.s1.light.raw} | {this.s2.light.raw} | {this.s3.light.raw} | {this.s4.light.raw}| {this.s5.light.raw}", new string[] { "align=center", "color=#FFEA79", "b" }));
 			Led.on(cRampFollowLine);
 		}
 	
@@ -946,7 +928,7 @@ public class RescueRoute{
 				Servo.foward(this.velocity);
 				Time.sleep(16);
 			}
-			else if(((50 - this.s3.light.raw) > 35) || (s4.light.raw < 45)){
+			else if(((50 - this.s4.light.raw) > 35) || (s5.light.raw < 45)){
 				Servo.right();
 				Time.sleep(32);
 				Servo.stop();
@@ -959,14 +941,14 @@ public class RescueRoute{
 		}
 	}
 
-	public RescueRoute(ref Reflective refs1_, ref Reflective refs2_, ref Reflective refs3_, ref Reflective refs4_, int velocity_){
-		mainRampFollowLine = new RampFollowLine(ref refs1_, ref refs2_, ref refs3_, ref refs4_, velocity_);
+	public RescueRoute(ref Reflective refs1_, ref Reflective refs2_, ref Reflective refs3_, ref Reflective refs4_, ref Reflective refs5_, int velocity_){
+		mainRampFollowLine = new RampFollowLine(ref refs1_, ref refs2_, ref refs3_, ref refs4_, ref refs4_, velocity_);
 	}
 
 	private int rampTimer = 0;
 	private RampFollowLine mainRampFollowLine;
 	public void verify(){
-		if(upRamp.isOnRange(Gyroscope.z) && (uRight.distance.raw < 40) && (uLeft.distance.raw < 40)){
+		if(upRamp.isOnRange(Gyroscope.z) && (uRight.distance.raw < 40)){
 			if(rampTimer == 0){
 				rampTimer = Time.current.millis + 2000;
 
@@ -1003,12 +985,12 @@ public class RescueRoute{
 static DegreesRange upRamp = new DegreesRange(330, 355);
 static DegreesRange downRamp = new DegreesRange(5, 30);
 
-static Reflective s1 = new Reflective(3), s2 = new Reflective(2), s3 = new Reflective(1), s4 = new Reflective(0);
-static Ultrassonic uFrontal = new Ultrassonic(0), uRight = new Ultrassonic(1), uLeft = new Ultrassonic(2);
+static Reflective s1 = new Reflective(4), s2 = new Reflective(3), s3 = new Reflective(2), s4 = new Reflective(1), s5 = new Reflective(0);
+static Ultrassonic uFrontal = new Ultrassonic(0), uRight = new Ultrassonic(1), uDown = new Ultrassonic(2);
 
-static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, ref s3, ref s4, 170);
+static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, ref s3, ref s4, ref s5, 190);
 static FloorRoute.Obstacle mainObstacle = new FloorRoute.Obstacle(ref uFrontal, 15);
-static RescueRoute mainRescue = new RescueRoute(ref s1, ref s2, ref s3, ref s4, 300);
+static RescueRoute mainRescue = new RescueRoute(ref s1, ref s2, ref s3, ref s4, ref s5, 300);
 //Instance modules ---------------------------------------------
 
 
