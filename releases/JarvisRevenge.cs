@@ -10,8 +10,11 @@ static Color cTurnNotGreen = new Color(0, 0, 0);
 static Color cTurnGreen = new Color(0, 255, 0);
 static Color cFakeGreen = new Color(255, 255, 0);
 static Color cAlertOffline = new Color(255, 0, 0);
+static Color cRampFollowLine= new Color(255, 0, 255);
 
 static long SETUPTIME = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+
+static byte UNIQUEID = 0;
 public delegate void MethodHandler();
 class Calc{
 	public static float constrain(float amt,float low,float high) => ((amt)<(low)?(low):((amt)>(high)?(high):(amt)));
@@ -57,6 +60,7 @@ public static class Robot{
 	public const byte kLights = 5;//number of sensors
 	public const byte kUltrassonics = 3;//number of sensors
 	public const byte kRefreshRate = 63;//ms of refresh rate in color/light sensor
+	public const byte ksize = 56;
 	//
 
 	public static void throwError(object message) => bc.RobotError(message.ToString());
@@ -110,6 +114,8 @@ public static class Time{
 		while (Time.current.millis < toWait){callwhile();}
 	}
 	public static void sleep(Clock clock) => bc.Wait(clock.millis);
+
+	public static void debug() => bc.Wait(123456789);
 };
 public struct Action{
 	public Action(bool raw_){
@@ -373,6 +379,8 @@ public struct Distance{
 
 	public float toRotations() => this.raw / 2;
 
+	public float fromCenter() => this.raw - (Robot.ksize / 2);
+
 	//Basic operators
 	public static bool operator >(Distance a, Distance b) => a.raw > b.raw;
 	public static bool operator <(Distance a, Distance b) => a.raw < b.raw;
@@ -554,37 +562,27 @@ public static class Servo{
 	}
 }
 public struct Vector2{
-    public float X;
-    public float Y;
+	public float x;
+	public float y;
 
-    public Vector2(float x, float y){
-        this.X = x;
-        this.Y = y;
-    }
+	public Vector2(float x, float y){
+		this.x = x;
+		this.y = y;
+	}
 
-    public static Vector2 operator + (Vector2 _v1, Vector2 _v2){
-        return new Vector2(_v1.X + _v2.X, _v1.Y + _v2.Y);
-    }
+	public static Vector2 operator + (Vector2 _v1, Vector2 _v2) => new Vector2(_v1.x + _v2.x, _v1.y + _v2.y);
 
-    public static Vector2 operator - (Vector2 _v1, Vector2 _v2){
-        return new Vector2(_v1.X - _v2.X, _v1.Y - _v2.Y);
-    }
+	public static Vector2 operator - (Vector2 _v1, Vector2 _v2) => new Vector2(_v1.x - _v2.x, _v1.y - _v2.y);
 
-    public static Vector2 operator * (Vector2 _v1, float m){
-        return new Vector2(_v1.X * m, _v1.Y * m);
-    }
+	public static Vector2 operator * (Vector2 _v1, float m) => new Vector2(_v1.x * m, _v1.y * m);
 
-    public static Vector2 operator / (Vector2 _v1, float d){
-        return new Vector2(_v1.X / d, _v1.Y / d);
-    }
+	public static Vector2 operator / (Vector2 _v1, float d) => new Vector2(_v1.x / d, _v1.y / d);
 
-    public static float distance(Vector2 _v1, Vector2 _v2){
-        return (float) Math.Sqrt(Math.Pow(_v1.X - _v2.X, 2) + Math.Pow(_v1.Y - _v2.Y, 2));
-    }
+	public static float distance(Vector2 _v1, Vector2 _v2) => (float)Math.Sqrt(Math.Pow(_v1.x - _v2.x, 2) + Math.Pow(_v1.y - _v2.y, 2));
 
-    public float length(){
-        return (float) Math.Sqrt(X * X + Y * Y);
-    }
+	public float distanceFrom(Vector2 _v) => (float)Math.Sqrt(Math.Pow(this.x - _v.x, 2) + Math.Pow(this.y - _v.y, 2));
+
+	public float length() => (float)Math.Sqrt(x * x + y * y);
 }
 
 
@@ -876,8 +874,127 @@ public static class FloorRoute{
 		}
 	}
 }
-public static class RescueRoute{
+public class RescueRoute{
+	public class Victim{
+		private bool isRescued { get; set; } = false;
+		public Vector2 position { get; set; }
+		public sbyte priority { get; set; }
+	
+		private byte id = 0;
+	
+	
+		public Victim(Vector2 position_, sbyte priority_){
+			this.position = position_;
+			this.priority = priority_;
+			this.id = UNIQUEID++;
+		}
+	
+		public void rescue(){
+			if(!isRescued){
+				isRescued = true;
+				return;
+			}
+		}
+	
+		public string infos() => $"'position':[{this.position.x},{this.position.y}], 'priority':{this.priority}, 'isRescued':{this.isRescued}, 'id':{this.id}";
+	}
+	
+	public class AliveVictim : Victim{
+		public AliveVictim(Vector2 position, sbyte priority = 0) : base(position, priority){}
+	}
+	public class DeadVictim: Victim{
+		public DeadVictim(Vector2 position, sbyte priority = 1) : base(position, priority){}
+	}
+	public static class RescueAnalyzer{
+	
+		public static void setup(){
+			bc.EraseConsoleFile();
+			bc.SetFileConsolePath("C:/Users/vinic/Documents/scripts/python/sBotics-viewer/res/out.txt");
+		}
+	
+		public static void exportVictim(RescueRoute.AliveVictim victim) => bc.WriteText($"[ALIVEVICTIM]({victim.infos()})");
+		public static void exportVictim(RescueRoute.DeadVictim victim) => bc.WriteText($"[DEADVICTIM]({victim.infos()})");
+		public static void exportPoint(Vector2 vector, string color, string info = "") => bc.WriteText($"[POINT]('position':[{vector.x},{vector.y}],'color':{color},'info':{info})");
+		public static void exportLine(Vector2 vector1, Vector2 vector2, string color, string info = "") => bc.WriteText($"[LINE]('position1':[{vector1.x},{vector1.y}],'position2':[{vector2.x},{vector2.y}],'color':{color},'info':{info})");
+		public static void exportRescue(byte? triangle, byte? exit) => bc.WriteText($"[RESCUE]('triangle':{triangle}, 'exit':{exit})");
+		public static void exportClearLines() => bc.WriteText($"[CLEARLINES]()");
+	}
+	public class RampFollowLine{
+		public RampFollowLine(ref Reflective refs1_, ref Reflective refs2_, ref Reflective refs3_, ref Reflective refs4_, int velocity_){
+			this.s1 = refs1_;
+			this.s2 = refs2_;
+			this.s3 = refs3_;
+			this.s4 = refs4_;
+			this.velocity = velocity_;
+		}
+	
+		public Reflective s1, s2, s3, s4;
+		public int velocity = 0;
+	
+		private void debugSensors(){
+			Log.info(Formatter.parse($"{this.s1.light.raw} | {this.s2.light.raw} | {this.s3.light.raw} | {this.s4.light.raw}", new string[] { "align=center", "color=#FFEA79", "b" }));
+			Led.on(cRampFollowLine);
+		}
+	
+		public void proc(){
+			Log.proc();
+			this.debugSensors();
+			if(((50 - this.s2.light.raw) > 35) || (s1.light.raw < 45)){
+				Servo.left();
+				Time.sleep(32);
+				Servo.stop();
+				Servo.foward(this.velocity);
+				Time.sleep(16);
+			}
+			else if(((50 - this.s3.light.raw) > 35) || (s4.light.raw < 45)){
+				Servo.right();
+				Time.sleep(32);
+				Servo.stop();
+				Servo.foward(this.velocity);
+				Time.sleep(16);
+			}
+			else{
+				Servo.foward(this.velocity);
+			}
+		}
+	}
 
+	public RescueRoute(ref Reflective refs1_, ref Reflective refs2_, ref Reflective refs3_, ref Reflective refs4_, int velocity_){
+		mainRampFollowLine = new RampFollowLine(ref refs1_, ref refs2_, ref refs3_, ref refs4_, velocity_);
+	}
+
+	private int rampTimer = 0;
+	private RampFollowLine mainRampFollowLine;
+	public void verify(){
+		if(upRamp.isOnRange(Gyroscope.z) && (uRight.distance.raw < 40) && (uLeft.distance.raw < 40)){
+			if(rampTimer == 0){
+				rampTimer = Time.current.millis + 2000;
+
+			}else if(Time.current.millis > rampTimer){
+				Servo.stop();
+				this.main();
+			}
+		}else{
+			rampTimer = 0;
+		}
+	}
+
+	public void check(){
+		if(upRamp.isOnRange(Gyroscope.z)){
+			main();
+		}
+	}
+
+	private void main(){
+		RescueAnalyzer.setup();
+		for(;;){
+			while(upRamp.isOnRange(Gyroscope.z)){
+				mainRampFollowLine.proc();
+			}
+			Servo.encoder(10);
+			Time.debug();
+		}
+	}
 }
 
 /* --------------- General code --------------- */
@@ -891,6 +1008,7 @@ static Ultrassonic uFrontal = new Ultrassonic(0), uRight = new Ultrassonic(1), u
 
 static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, ref s3, ref s4, 170);
 static FloorRoute.Obstacle mainObstacle = new FloorRoute.Obstacle(ref uFrontal, 15);
+static RescueRoute mainRescue = new RescueRoute(ref s1, ref s2, ref s3, ref s4, 300);
 //Instance modules ---------------------------------------------
 
 
@@ -904,6 +1022,7 @@ void setup(){
 void loop(){
 	mainFollow.proc();
 	mainObstacle.verify();
+	mainRescue.verify();
 }
 
 //----------------------------- Main ---------------------------------------//
@@ -923,6 +1042,7 @@ void loop(){
 #else //DEFAULT MAIN
 	void Main(){
 		setup();
+		mainRescue.check();
 		for(;;){
 			loop();
 		}

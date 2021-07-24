@@ -1,25 +1,30 @@
-public interface IVictim{
-	Vector2 position { get; set; }
-	sbyte priority { get; set; }
-}
-
-public struct AliveVictim: IVictim{
-	public AliveVictim(Vector2 position_, sbyte priority_ = 0){
-		this.position = position_;
-		this.priority = priority_;
-	}
-
+public class Victim{
+	private bool isRescued { get; set; } = false;
 	public Vector2 position { get; set; }
 	public sbyte priority { get; set; }
-}
 
-public struct DeadVictim: IVictim{
-	public DeadVictim(Vector2 position_, sbyte priority_ = 0){
+	private byte id = 0;
+
+
+	public Victim(Vector2 position_, sbyte priority_){
 		this.position = position_;
 		this.priority = priority_;
+		this.id = UNIQUEID++;
 	}
 
+	public void rescue(){
+		if(!isRescued){
+			isRescued = true;
+			return;
+		}
+	}
 
-	public Vector2 position { get; set; }
-	public sbyte priority { get; set; }
+	public string infos() => $"'position':[{this.position.x},{this.position.y}], 'priority':{this.priority}, 'isRescued':{this.isRescued}, 'id':{this.id}";
+}
+
+public class AliveVictim : Victim{
+	public AliveVictim(Vector2 position, sbyte priority = 0) : base(position, priority){}
+}
+public class DeadVictim: Victim{
+	public DeadVictim(Vector2 position, sbyte priority = 1) : base(position, priority){}
 }

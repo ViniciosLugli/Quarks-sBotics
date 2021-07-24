@@ -9,5 +9,8 @@ static Color cTurnNotGreen = new Color(0, 0, 0);
 static Color cTurnGreen = new Color(0, 255, 0);
 static Color cFakeGreen = new Color(255, 255, 0);
 static Color cAlertOffline = new Color(255, 0, 0);
+static Color cRampFollowLine= new Color(255, 0, 255);
 
 static long SETUPTIME = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+
+static byte UNIQUEID = 0;

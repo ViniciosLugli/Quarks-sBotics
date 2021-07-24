@@ -35,6 +35,7 @@ static Ultrassonic uFrontal = new Ultrassonic(0), uRight = new Ultrassonic(1), u
 
 static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, ref s3, ref s4, 170);
 static FloorRoute.Obstacle mainObstacle = new FloorRoute.Obstacle(ref uFrontal, 15);
+static RescueRoute mainRescue = new RescueRoute(ref s1, ref s2, ref s3, ref s4, 300);
 //Instance modules ---------------------------------------------
 
 
@@ -48,6 +49,7 @@ void setup(){
 void loop(){
 	mainFollow.proc();
 	mainObstacle.verify();
+	mainRescue.verify();
 }
 
 //----------------------------- Main ---------------------------------------//
@@ -67,6 +69,7 @@ void loop(){
 #else //DEFAULT MAIN
 	void Main(){
 		setup();
+		mainRescue.check();
 		for(;;){
 			loop();
 		}

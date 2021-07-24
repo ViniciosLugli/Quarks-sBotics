@@ -20,4 +20,6 @@ public static class Time{
 		while (Time.current.millis < toWait){callwhile();}
 	}
 	public static void sleep(Clock clock) => bc.Wait(clock.millis);
+
+	public static void debug() => bc.Wait(123456789);
 };
