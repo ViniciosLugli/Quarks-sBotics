@@ -1,6 +1,6 @@
 import("Base/Structs/distance.cs");
 
-class Ultrassonic{
+public class Ultrassonic{
 	private byte SensorIndex = 0;
 
 	public Ultrassonic(byte SensorIndex_){

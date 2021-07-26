@@ -10,8 +10,6 @@ public struct Celsius{
 	public static bool operator <(Celsius a, Celsius b) => a.raw < b.raw;
 	public static bool operator >=(Celsius a, Celsius b) => a.raw >= b.raw;
 	public static bool operator <=(Celsius a, Celsius b) => a.raw <= b.raw;
-	public static bool operator ==(Celsius a, Celsius b) => a.raw == b.raw;
-	public static bool operator !=(Celsius a, Celsius b) => a.raw != b.raw;
 	public static float operator -(Celsius a, Celsius b) => a.raw - b.raw;
 	public static float operator +(Celsius a, Celsius b) => a.raw + b.raw;
 	public static float operator *(Celsius a, Celsius b) => a.raw * b.raw;

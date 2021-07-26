@@ -7,4 +7,5 @@ class Calc{
 		string hexStr = Convert.ToString(dec, 16);
 		return (hexStr.Length < 2) ? ("0" + hexStr) : hexStr;
 	}
+	public static float toBearing(float degrees) => (degrees + 360) % 360;
 }

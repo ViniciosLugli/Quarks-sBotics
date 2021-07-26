@@ -62,8 +62,6 @@ public struct Light{
 	public static bool operator <(Light a, Light b) => a.value < b.value;
 	public static bool operator >=(Light a, Light b) => a.value >= b.value;
 	public static bool operator <=(Light a, Light b) => a.value <= b.value;
-	public static bool operator ==(Light a, Light b) => a.value == b.value;
-	public static bool operator !=(Light a, Light b) => a.value != b.value;
 	public static float operator -(Light a, Light b) => a.value - b.value;
 	public static float operator +(Light a, Light b) => a.value + b.value;
 	public static float operator *(Light a, Light b) => a.value * b.value;

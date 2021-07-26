@@ -8,6 +8,9 @@ public static class Time{
 	static public Clock timer {
 		get => new Clock(bc.Timer());
 	}
+	public static Clock currentUnparsed {
+		get => new Clock((int)(DateTimeOffset.Now.ToUnixTimeMilliseconds() - SETUPTIME));
+	}
 
 	public static void resetTimer() => bc.ResetTimer();
 
@@ -17,4 +20,6 @@ public static class Time{
 		while (Time.current.millis < toWait){callwhile();}
 	}
 	public static void sleep(Clock clock) => bc.Wait(clock.millis);
+
+	public static void debug() => bc.Wait(123456789);
 };

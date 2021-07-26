@@ -7,13 +7,13 @@ public struct Distance{
 
 	public float toRotations() => this.raw / 2;
 
+	public float fromCenter() => this.raw - (Robot.ksize / 2);
+
 	//Basic operators
 	public static bool operator >(Distance a, Distance b) => a.raw > b.raw;
 	public static bool operator <(Distance a, Distance b) => a.raw < b.raw;
 	public static bool operator >=(Distance a, Distance b) => a.raw >= b.raw;
 	public static bool operator <=(Distance a, Distance b) => a.raw <= b.raw;
-	public static bool operator ==(Distance a, Distance b) => a.raw == b.raw;
-	public static bool operator !=(Distance a, Distance b) => a.raw != b.raw;
 	public static float operator -(Distance a, Distance b) => a.raw - b.raw;
 	public static float operator +(Distance a, Distance b) => a.raw + b.raw;
 	public static float operator *(Distance a, Distance b) => a.raw * b.raw;

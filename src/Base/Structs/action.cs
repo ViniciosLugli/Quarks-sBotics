@@ -4,8 +4,4 @@ public struct Action{
 	}
 
 	public bool raw;
-
-	//Basic operators
-	public static bool operator ==(Action a, Action b) => a.raw == b.raw;
-	public static bool operator !=(Action a, Action b) => a.raw != b.raw;
 }

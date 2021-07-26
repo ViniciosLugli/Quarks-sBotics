@@ -16,11 +16,13 @@ import("Base/Classes/reflective.cs");
 import("Base/Classes/ultrassonic.cs");
 import("Base/Classes/actuator.cs");
 import("Base/Classes/servo.cs");
+import("Base/Structs/vector2.cs");
 import("Base/Attributes/debug.cs");
 
 
 //Modules for competition challenges
 import("Modules/FloorRoute/floorRoute.cs");
+import("Modules/RescueRoute/rescueRoute.cs");
 
 /* --------------- General code --------------- */
 
@@ -28,48 +30,46 @@ import("Modules/FloorRoute/floorRoute.cs");
 static DegreesRange upRamp = new DegreesRange(330, 355);
 static DegreesRange downRamp = new DegreesRange(5, 30);
 
-static Reflective s1 = new Reflective(1);
-static Reflective s2 = new Reflective(0);
+static Reflective s1 = new Reflective(1), s2 = new Reflective(0);
+static Ultrassonic uFrontal = new Ultrassonic(0), uRight = new Ultrassonic(1);
+
 static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, 135);
+static FloorRoute.Obstacle mainObstacle = new FloorRoute.Obstacle(ref uFrontal, 26);
+static RescueRoute mainRescue = new RescueRoute(ref s1, ref s2, 300);
 //Instance modules ---------------------------------------------
 
 
 //Setup program
 void setup(){
 	Actuator.alignUp();
+	Time.resetTimer();
 }
 
 //Main loop
 void loop(){
-	if((this.CurrentState & (byte)States.FOLLOWLINE) != 0){
-		mainFollow.proc();
-	} else if ((this.CurrentState & (byte)States.OBSTACLE) != 0){
-
-	}else if ((this.CurrentState & (byte)States.UPRAMP) != 0){
-
-	}else if ((this.CurrentState & (byte)States.DOWNRAMP) != 0){
-
-	}else if ((this.CurrentState & (byte)States.RESCUERAMP) != 0){
-
-	}else if ((this.CurrentState & (byte)States.RESCUE) != 0){
-
-	}else if ((this.CurrentState & (byte)States.RESCUEEXIT) != 0){
-
-	}else if ((this.CurrentState & (byte)States.NOP) != 0){
-	}
+	mainFollow.proc();
+	mainObstacle.verify();
+	mainRescue.verify();
 }
 
 //----------------------------- Main ---------------------------------------//
 
-#if(false) //DEBUG MODE MAIN
+#if (false) //DEBUG MODE MAIN
 	void Main(){
-		mainFollow.alignSensors();
-	for(;;){
-	}
+	//long a = Time.current.millis;
+	//float abuble = bc.Lightness(1);
+	//while (abuble == bc.Lightness(1)) {
+	//	Servo.left();
+	//}
+	//bc.Print(Time.current.millis - a);
+	//Servo.stop();
+	for (;;){
+		}
 	}
 #else //DEFAULT MAIN
 	void Main(){
 		setup();
+		mainRescue.check();
 		for(;;){
 			loop();
 		}

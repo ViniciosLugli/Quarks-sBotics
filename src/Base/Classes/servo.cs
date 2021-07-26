@@ -1,7 +1,9 @@
 public static class Servo{
 	public static void move(float left=300, float right=300) => bc.Move(left, right);
 
-	public static void foward(float velocity=300) => bc.Move(velocity, velocity);
+	public static void foward(float velocity=300) => bc.Move(Math.Abs(velocity), Math.Abs(velocity));
+
+	public static void backward(float velocity=300) => bc.Move(-velocity, -velocity);
 
 	public static void left(float velocity=1000) => bc.Move(-velocity, +velocity);
 
@@ -16,5 +18,46 @@ public static class Servo{
 
 	public static void stop() => bc.Move(0, 0);
 
-	// public static void nextAngle()
+	public static void nextAngleRight(byte ignoreAngles = 0){
+		Servo.rotate(Math.Abs(ignoreAngles));
+		Servo.right();
+		while(!Gyroscope.inPoint(false)){}
+		Servo.stop();
+	}
+
+	public static void nextAngleLeft(byte ignoreAngles = 0){
+		Servo.rotate(-ignoreAngles);
+		Servo.left();
+		while(!Gyroscope.inPoint(false)){}
+		Servo.stop();
+	}
+
+	public static void alignNextAngle(){
+		Log.proc();
+		if(Gyroscope.inPoint(true, 2)){return;}
+		Degrees alignLocal = new Degrees(0);;
+		if((Gyroscope.x.raw > 315) || (Gyroscope.x.raw <= 45)){
+			alignLocal = new Degrees(0);
+		}else if((Gyroscope.x.raw > 45) && (Gyroscope.x.raw <= 135)){
+			alignLocal = new Degrees(90);
+		}else if((Gyroscope.x.raw > 135) && (Gyroscope.x.raw <= 225)){
+			alignLocal = new Degrees(180);
+		}else if((Gyroscope.x.raw > 225) && (Gyroscope.x.raw <= 315)){
+			alignLocal = new Degrees(270);
+		}
+
+		Log.info(Formatter.parse($"Align to {alignLocal.raw}°", new string[]{"i","color=#505050", "align=center"}));
+
+		if((alignLocal.raw == 0) && (Gyroscope.x.raw > 180)){
+			Servo.right();
+		}else if((alignLocal.raw == 0) && (Gyroscope.x.raw < 180)){
+			Servo.left();
+		}else if(Gyroscope.x < alignLocal){
+			Servo.right();
+		}else if(Gyroscope.x > alignLocal){
+			Servo.left();
+		}
+		while(!(Gyroscope.x % alignLocal)){}
+		Servo.stop();
+	}
 }
