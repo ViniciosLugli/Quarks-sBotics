@@ -56,14 +56,15 @@ void loop(){
 
 #if (false) //DEBUG MODE MAIN
 	void Main(){
-		long a = Time.current.millis;
-		float abuble = bc.Lightness(1);
-		while (abuble == bc.Lightness(1)) {
-			Servo.left();
-		}
-		bc.Print(Time.current.millis - a);
-		Servo.stop();
-		for (;;){
+	mainFollow.alignSensors();
+	//long a = Time.current.millis;
+	//float abuble = bc.Lightness(1);
+	//while (abuble == bc.Lightness(1)) {
+	//	Servo.left();
+	//}
+	//bc.Print(Time.current.millis - a);
+	//Servo.stop();
+	for (;;){
 		}
 	}
 #else //DEFAULT MAIN

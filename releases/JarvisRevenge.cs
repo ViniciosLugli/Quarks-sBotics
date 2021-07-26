@@ -631,20 +631,14 @@ public static class FloorRoute{
 		}
 	
 		public void alignSensors(){
-			if(this.s2.light > this.s3.light){
-				while(this.s2.light.raw < 45){Servo.left();}
+			if(this.s3.light > this.s2.light){
 				Servo.right();
-				while(this.s2.light.raw > 45){}
-				Servo.left();
-				Time.sleep(32);
-				Servo.stop();
+				while(!this.s2.hasLine()){}
+				Servo.rotate(-2);
 			}else{
-				while(this.s3.light.raw < 45){Servo.right();}
 				Servo.left();
-				while(this.s3.light.raw > 45){}
-				Servo.right();
-				Time.sleep(32);
-				Servo.stop();
+				while(!this.s3.hasLine()){}
+				Servo.rotate(2);
 			}
 		}
 	}
@@ -772,8 +766,8 @@ public static class FloorRoute{
 		}
 	
 		public static void confirm(FloorRoute.FollowLine Follower, MethodHandler callback){
-			Clock bTimer = new Clock(Time.current.millis + 256);
-			Servo.foward(Follower.velocity);
+			Clock bTimer = new Clock(Time.current.millis + 304);
+			Servo.foward(Follower.velocity * 0.9f);
 			while(bTimer > Time.current){
 				if((Follower.s1.light.raw < 52 && !Follower.s1.isColored()) || (Follower.s2.light.raw < 52 && !Follower.s2.isColored()) || (Follower.s1.light.raw < 52 && !Follower.s3.isColored()) || (Follower.s4.light.raw < 52 && !Follower.s2.isColored())){
 					Servo.stop();
@@ -826,13 +820,13 @@ public static class FloorRoute{
 		}
 	
 		private static void checkInLine(FloorRoute.FollowLine Follower, MethodHandler callback){
-			Servo.rotate(1.5f);
-			if(!(Follower.s1.light.raw < 55) && !(Follower.s2.light.raw < 55) && !(Follower.s3.light.raw < 55) && !(Follower.s4.light.raw < 55)){
-				Servo.rotate(-1.5f);
+			Clock rTimer = new Clock(Time.current.millis + 128);
+	
+			rTimer(!(Follower.s1.light.raw < 55) && !(Follower.s2.light.raw < 55) && !(Follower.s3.light.raw < 55) && !(Follower.s4.light.raw < 55)){
+				Servo.rotate(-2f);
 				callback();
-			}else{
-				Servo.rotate(-1.5f);
 			}
+			Servo.rotate(-1.5f);
 		}
 	}
 	public class Obstacle{
@@ -1029,14 +1023,15 @@ void loop(){
 
 #if (false) //DEBUG MODE MAIN
 	void Main(){
-		long a = Time.current.millis;
-		float abuble = bc.Lightness(1);
-		while (abuble == bc.Lightness(1)) {
-			Servo.left();
-		}
-		bc.Print(Time.current.millis - a);
-		Servo.stop();
-		for (;;){
+	mainFollow.alignSensors();
+	//long a = Time.current.millis;
+	//float abuble = bc.Lightness(1);
+	//while (abuble == bc.Lightness(1)) {
+	//	Servo.left();
+	//}
+	//bc.Print(Time.current.millis - a);
+	//Servo.stop();
+	for (;;){
 		}
 	}
 #else //DEFAULT MAIN

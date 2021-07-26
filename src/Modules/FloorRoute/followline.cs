@@ -41,20 +41,14 @@ public class FollowLine{
 	}
 
 	public void alignSensors(){
-		if(this.s2.light > this.s3.light){
-			while(this.s2.light.raw < 45){Servo.left();}
+		if(this.s3.light > this.s2.light){
 			Servo.right();
-			while(this.s2.light.raw > 45){}
-			Servo.left();
-			Time.sleep(32);
-			Servo.stop();
+			while(!this.s2.hasLine()){}
+			Servo.rotate(-2);
 		}else{
-			while(this.s3.light.raw < 45){Servo.right();}
 			Servo.left();
-			while(this.s3.light.raw > 45){}
-			Servo.right();
-			Time.sleep(32);
-			Servo.stop();
+			while(!this.s3.hasLine()){}
+			Servo.rotate(2);
 		}
 	}
 }

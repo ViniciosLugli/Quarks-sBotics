@@ -42,8 +42,8 @@ private class Green{
 	}
 
 	public static void confirm(FloorRoute.FollowLine Follower, MethodHandler callback){
-		Clock bTimer = new Clock(Time.current.millis + 256);
-		Servo.foward(Follower.velocity);
+		Clock bTimer = new Clock(Time.current.millis + 304);
+		Servo.foward(Follower.velocity * 0.9f);
 		while(bTimer > Time.current){
 			if((Follower.s1.light.raw < 52 && !Follower.s1.isColored()) || (Follower.s2.light.raw < 52 && !Follower.s2.isColored()) || (Follower.s1.light.raw < 52 && !Follower.s3.isColored()) || (Follower.s4.light.raw < 52 && !Follower.s2.isColored())){
 				Servo.stop();

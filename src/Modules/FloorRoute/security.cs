@@ -18,12 +18,11 @@ static private class Security{
 	}
 
 	private static void checkInLine(FloorRoute.FollowLine Follower, MethodHandler callback){
-		Servo.rotate(1.5f);
-		if(!(Follower.s1.light.raw < 55) && !(Follower.s2.light.raw < 55) && !(Follower.s3.light.raw < 55) && !(Follower.s4.light.raw < 55)){
-			Servo.rotate(-1.5f);
+		Clock rTimer = new Clock(Time.current.millis + 128);
+		while(!(Follower.s1.light.raw < 55) && !(Follower.s2.light.raw < 55) && !(Follower.s3.light.raw < 55) && !(Follower.s4.light.raw < 55)){
+			Servo.rotate(-2f);
 			callback();
-		}else{
-			Servo.rotate(-1.5f);
 		}
+		Servo.rotate(-1.5f);
 	}
 }
