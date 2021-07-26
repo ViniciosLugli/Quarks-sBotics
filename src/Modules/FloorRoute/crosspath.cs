@@ -68,5 +68,5 @@ public static class CrossPath{
 		Servo.rotate(5f);
 	}
 
-	public static bool verify(Reflective tsensor) => tsensor.light.raw < 45 && !tsensor.isMat();
+	public static bool verify(Reflective tsensor) => tsensor.light.raw < 50 && !tsensor.isMat();
 }

@@ -361,7 +361,7 @@ public class Reflective{
 	}
 	public bool hasLine() => bc.ReturnRed((int)this.SensorIndex) < 35 && bc.ReturnGreen((int)this.SensorIndex) < 35;
 
-	public bool isMat() => bc.ReturnRed((int)this.SensorIndex) > 65;
+	public bool isMat() => bc.ReturnRed((int)this.SensorIndex) > 50;
 
 	public bool isColored() => bc.ReturnRed((int)this.SensorIndex) != bc.ReturnBlue((int)this.SensorIndex);
 
@@ -544,22 +544,13 @@ public static class FloorRoute{
 			Log.proc();
 			this.debugSensors();
 			Green.verify(this);
-			if((this.s1.light.raw < 50) && !this.s1.isMat()){
-				Servo.left();
-				Time.resetTimer();
-				while(this.s1.rgb.r < 60){
-					Green.verify(this);
-					if(Time.timer.millis > 112){
-						Green.verify(this);
-						if(Gyroscope.inPoint() && CrossPath.verify(this.s1)){
-							CrossPath.findLineLeft(ref this.s1);
-						}
-						break;
-					}
-				}
-				Time.sleep(48, () => Green.verify(this));
+			if((this.s1.light.raw < 55) && !this.s1.isMat()){
 				Servo.foward(this.velocity);
 				Time.sleep(32, () => Green.verify(this));
+				Servo.left();
+				Time.sleep(152, () => Green.verify(this));
+				Servo.foward(this.velocity);
+				Time.sleep(16, () => Green.verify(this));
 				Servo.stop();
 				Time.sleep(Robot.kRefreshRate - 16, () => Green.verify(this));
 				Green.verify(this);
@@ -567,27 +558,19 @@ public static class FloorRoute{
 					CrossPath.findLineLeft(ref this.s1);
 				}
 				Green.verify(this);
-			}else if((this.s2.light.raw < 50) && !this.s2.isMat()){
-				Servo.right();
-				Time.resetTimer();
-				while(this.s2.rgb.r < 60){
-					Green.verify(this);
-					if(Time.timer.millis > 112){
-						Green.verify(this);
-						if(Gyroscope.inPoint() && CrossPath.verify(this.s2)){
-							CrossPath.findLineRight(ref this.s2);
-						}
-						break;
-					}
-				}
-				Time.sleep(48, () => Green.verify(this));
+			}else if((this.s2.light.raw < 55) && !this.s2.isMat()){
 				Servo.foward(this.velocity);
 				Time.sleep(32, () => Green.verify(this));
+				Servo.right();
+				Time.sleep(152, () => Green.verify(this));
+				Servo.foward(this.velocity);
+				Time.sleep(16, () => Green.verify(this));
 				Servo.stop();
 				Time.sleep(Robot.kRefreshRate - 16, () => Green.verify(this));
 				Green.verify(this);
 				if(CrossPath.verify(this.s2)){
 					CrossPath.findLineRight(ref this.s2);
+					return;
 				}
 				Green.verify(this);
 			}else{
@@ -677,7 +660,7 @@ public static class FloorRoute{
 			Servo.rotate(5f);
 		}
 	
-		public static bool verify(Reflective tsensor) => tsensor.light.raw < 45 && !tsensor.isMat();
+		public static bool verify(Reflective tsensor) => tsensor.light.raw < 50 && !tsensor.isMat();
 	}
 	public class Green{
 	
