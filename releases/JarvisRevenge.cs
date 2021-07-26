@@ -821,8 +821,7 @@ public static class FloorRoute{
 	
 		private static void checkInLine(FloorRoute.FollowLine Follower, MethodHandler callback){
 			Clock rTimer = new Clock(Time.current.millis + 128);
-	
-			rTimer(!(Follower.s1.light.raw < 55) && !(Follower.s2.light.raw < 55) && !(Follower.s3.light.raw < 55) && !(Follower.s4.light.raw < 55)){
+			while(!(Follower.s1.light.raw < 55) && !(Follower.s2.light.raw < 55) && !(Follower.s3.light.raw < 55) && !(Follower.s4.light.raw < 55)){
 				Servo.rotate(-2f);
 				callback();
 			}
