@@ -18,7 +18,7 @@ public class FollowLine{
 		Green.verify(this);
 		if((this.s1.light.raw < 55) && !this.s1.isMat()){
 			Servo.foward(this.velocity);
-			Time.sleep(32, () => Green.verify(this));
+			Time.sleep(16, () => Green.verify(this));
 			Servo.left();
 			Time.sleep(152, () => Green.verify(this));
 			Servo.foward(this.velocity);
@@ -32,7 +32,7 @@ public class FollowLine{
 			Green.verify(this);
 		}else if((this.s2.light.raw < 55) && !this.s2.isMat()){
 			Servo.foward(this.velocity);
-			Time.sleep(32, () => Green.verify(this));
+			Time.sleep(16, () => Green.verify(this));
 			Servo.right();
 			Time.sleep(152, () => Green.verify(this));
 			Servo.foward(this.velocity);
