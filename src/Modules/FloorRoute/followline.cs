@@ -21,18 +21,18 @@ public class FollowLine{
 		this.debugSensors();
 		Green.verify(this);
 		CrossPath.verify(this);
-		if(this.s2.light.raw < 52 && !this.s2.isColored()){
+		if(this.s2.light.raw < 50 && !this.s2.isColored()){
 			Servo.left();
 			while(this.s3.light.raw > 50){Green.verify(this);CrossPath.verify(this);}
-			Time.sleep(48, () => {Green.verify(this);CrossPath.verify(this);});
+			Time.sleep(64, () => {Green.verify(this);CrossPath.verify(this);});
 			Servo.stop();
 			Servo.foward(this.velocity);
 			Time.sleep(32, () => {Green.verify(this);CrossPath.verify(this);});
 			Time.resetTimer();
-		}else if(this.s4.light.raw < 52 && !this.s4.isColored()){
+		}else if(this.s4.light.raw < 50 && !this.s4.isColored()){
 			Servo.right();
 			while(this.s3.light.raw > 50){Green.verify(this);CrossPath.verify(this);}
-			Time.sleep(48, () => {Green.verify(this);CrossPath.verify(this);});
+			Time.sleep(64, () => {Green.verify(this);CrossPath.verify(this);});
 			Servo.stop();
 			Servo.foward(this.velocity);
 			Time.sleep(32, () => {Green.verify(this);CrossPath.verify(this);});
