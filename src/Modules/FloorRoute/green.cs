@@ -19,7 +19,7 @@ public class Green{
 		Log.clear();
 		Log.proc();
 		Servo.encoder(14f);
-		Servo.rotate(-20f);
+		Servo.rotate(-25f);
 		Degrees maxLeft = new Degrees(Gyroscope.x.raw - 87);
 		Servo.left();
 		while((!refsensor_.hasLine()) && (!(Gyroscope.x % maxLeft))){}
@@ -32,7 +32,7 @@ public class Green{
 		Log.clear();
 		Log.proc();
 		Servo.encoder(14f);
-		Servo.rotate(20f);
+		Servo.rotate(25f);
 		Degrees maxRight = new Degrees(Gyroscope.x.raw + 87);
 		Servo.right();
 		while((!refsensor_.hasLine()) && (!(Gyroscope.x % maxRight))){}
@@ -47,13 +47,14 @@ public class Green{
 			Time.sleep(32);
 			Servo.stop();
 			if(Follower.s1.rgb.hasGreen() && Follower.s2.rgb.hasGreen()){
-				findLineBack();
+				Green.findLineBack();
 			}else if(Follower.s1.rgb.hasGreen()){
-				findLineLeft(ref Follower.s2);
+				Green.findLineLeft(ref Follower.s2);
 			}else if(Follower.s2.rgb.hasGreen()){
-				findLineRight(ref Follower.s1);
+				Green.findLineRight(ref Follower.s1);
 			}
 			Follower.lastGreen = Time.current;
+			Time.resetTimer();
 			return true;
 		}else{
 			return false;

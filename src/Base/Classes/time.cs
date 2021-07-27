@@ -15,7 +15,7 @@ public static class Time{
 	public static void resetTimer() => bc.ResetTimer();
 
 	public static void sleep(int ms) => bc.Wait(ms);
-	public static void sleep(int ms, MethodHandler callwhile) {
+	public static void sleep(int ms, ActionHandler callwhile) {
 		int toWait = Time.current.millis + ms;
 		while (Time.current.millis < toWait){callwhile();}
 	}

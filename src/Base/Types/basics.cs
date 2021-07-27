@@ -1,1 +1,1 @@
-public delegate void MethodHandler();
+public delegate void ActionHandler();

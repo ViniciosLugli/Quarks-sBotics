@@ -8,7 +8,7 @@ public class Obstacle{
 	private byte distance;
 
 	public void verify(){
-		if(uObs.distance.raw < this.distance && Time.current.millis > 2000){
+		if(uObs.distance.raw > 16 && uObs.distance.raw < this.distance && Time.current.millis > 2000){
 			this.dodge();
 			this.verify();
 		}

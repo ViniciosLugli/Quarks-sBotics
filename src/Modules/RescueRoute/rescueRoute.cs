@@ -7,20 +7,20 @@ public class RescueRoute{
 		mainRampFollowLine = new RampFollowLine(ref refs1_, ref refs2_, velocity_);
 	}
 
-	private int rampTimer = 0;
+	public int rampTimer = 0;
 	private RampFollowLine mainRampFollowLine;
 
 	public void verify(){
 		if(upRamp.isOnRange(Gyroscope.z) && (uRight.distance.raw < 40)){
-			if(rampTimer == 0){
-				rampTimer = Time.current.millis + 2000;
+			if(this.rampTimer == 0){
+				this.rampTimer = Time.current.millis + 2000;
 
-			}else if(Time.current.millis > rampTimer){
+			}else if(Time.current.millis > this.rampTimer){
 				Servo.stop();
 				this.main();
 			}
 		}else{
-			rampTimer = 0;
+			this.rampTimer = 0;
 		}
 	}
 

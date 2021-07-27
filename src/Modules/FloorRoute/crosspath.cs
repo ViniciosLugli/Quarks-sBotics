@@ -8,21 +8,20 @@ public static class CrossPath{
 		CrossPath.notify();
 		Log.clear();
 		Log.proc();
-		Degrees initialDefault = new Degrees(Gyroscope.x.raw - 75);
 		Degrees max = new Degrees(Gyroscope.x.raw - 90);
 		Servo.encoder(7f);
 		Servo.left();
 		while(true){
-			if(CrossPath.checkLine(Follower)){return;}
+			if(CrossPath.checkLine(Follower)){Time.resetTimer();return;}
 			if(Gyroscope.x % max){
 				max = new Degrees(Gyroscope.x.raw + 165);
 				Servo.right();
 				while(true){
-					if(CrossPath.checkLine(Follower)){return;}
+					if(CrossPath.checkLine(Follower)){Time.resetTimer();return;}
 					if (Gyroscope.x % max){
-						Servo.left();
-						while(!(Gyroscope.x % initialDefault)){}
-						Servo.stop();
+						Servo.nextAngleLeft();
+						Servo.rotate(-72);
+						Time.resetTimer();
 						return;
 					}
 				}
@@ -34,21 +33,20 @@ public static class CrossPath{
 		CrossPath.notify();
 		Log.clear();
 		Log.proc();
-		Degrees initialDefault = new Degrees(Gyroscope.x.raw + 75);
 		Degrees max = new Degrees(Gyroscope.x.raw + 90);
 		Servo.encoder(7f);
 		Servo.right();
 		while(true){
-			if(CrossPath.checkLine(Follower)){return;}
+			if(CrossPath.checkLine(Follower)){Time.resetTimer();return;}
 			if(Gyroscope.x % max){
 				max = new Degrees(Gyroscope.x.raw - 165);
 				Servo.left();
 				while (true){
-					if(CrossPath.checkLine(Follower)){return;}
+					if(CrossPath.checkLine(Follower)){Time.resetTimer();return;}
 					if (Gyroscope.x % max){
-						Servo.right();
-						while(!(Gyroscope.x % initialDefault)){}
-						Servo.stop();
+						Servo.nextAngleRight();
+						Servo.rotate(72);
+						Time.resetTimer();
 						return;
 					}
 				}

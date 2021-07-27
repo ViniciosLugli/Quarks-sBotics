@@ -1,11 +1,7 @@
 static private class Security{
 	public static void verify(FloorRoute.FollowLine Follower){
-		if(Time.timer.millis > (2800 - (Follower.velocity * 10))){
-			if(Gyroscope.inPoint()){
-				Security.checkInLine(Follower, () => Security.backToLine(Follower));
-			}else{
-				Security.backToLine(Follower);
-			}
+		if(Time.timer.millis > (2800 - (Follower.velocity * 13)) && mainRescue.rampTimer == 0){
+			Security.checkInLine(Follower, () => Security.backToLine(Follower));
 			Time.resetTimer();
 		}
 	}
@@ -17,12 +13,20 @@ static private class Security{
 		Servo.encoder(-3);
 	}
 
-	private static void checkInLine(FloorRoute.FollowLine Follower, MethodHandler callback){
-		Clock rTimer = new Clock(Time.current.millis + 128);
+	private static void checkInLine(FloorRoute.FollowLine Follower, ActionHandler callback){
+		Clock timeout = new Clock(Time.current.millis + 256);
 		while(!(Follower.s1.light.raw < 55) && !(Follower.s2.light.raw < 55) ){
-			Servo.rotate(-2f);
-			callback();
+			Servo.left();
+			if(Time.current > timeout){
+				Servo.right();
+				Time.sleep(256);
+				Servo.stop();
+				callback();
+				return;
+			}
 		}
-		Servo.rotate(-1.5f);
+		Servo.right();
+		Time.sleep(timeout - Time.current);
+		Servo.stop();
 	}
 }

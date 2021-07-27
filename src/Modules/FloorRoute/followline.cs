@@ -16,44 +16,25 @@ public class FollowLine{
 	public void proc(){
 		Log.proc();
 		this.debugSensors();
-		if(Green.verify(this)){return;}
-		if(this.s1.light.raw < 55 && !this.s1.isColored()){
-			Servo.left();
-			Time.resetTimer();
-			while(this.s1.light.raw < 55){
-				if(Green.verify(this)){return;}
-				if(Time.timer.millis > 144){
-					if(Green.verify(this)){return;}
-					if(Gyroscope.inPoint() && CrossPath.verify(this.s1)){
-						CrossPath.findLineLeft(this);
-						return;
-					}
-					break;
-				}
-			}
-			Time.sleep(32, () => Green.verify(this));
-			Servo.foward(this.velocity);
-			Time.sleep(32, () => Green.verify(this));
-			Servo.stop();
-			if(Green.verify(this)){return;}
-			if((this.lastGreen.millis + 320) > Time.current.millis){
-				return;
-			}else if(CrossPath.verify(this.s1)){
-				CrossPath.findLineLeft(this);
-				return;
-			}
-			if(Green.verify(this)){return;}
 
-		}else if(this.s2.light.raw < 55 && !this.s2.isColored()){
-			Servo.right();
-			Time.resetTimer();
-			while(this.s2.light.raw < 55){
-				if(Green.verify(this)){return;}
-				if(Time.timer.millis > 144){
-					if(Green.verify(this)){return;}
-					if(Gyroscope.inPoint() && CrossPath.verify(this.s2)){
-						CrossPath.findLineRight(this);
-						return;
+		if(Green.verify(this)){return;}
+
+		if(checkSensor(ref this.s1, () => Servo.left(), () => CrossPath.findLineLeft(this))){}
+		else if(checkSensor(ref this.s2, () => Servo.right(), () => CrossPath.findLineRight(this))){}
+		else{Servo.foward(this.velocity); Security.verify(this);}
+	}
+
+	private bool checkSensor(ref Reflective refsensor_, ActionHandler correctCallback, ActionHandler crossCallback){
+		if(refsensor_.light.raw < 55 && !refsensor_.isColored()){
+			correctCallback();
+			Clock timeout = new Clock(Time.current.millis + 144);
+			while(refsensor_.light.raw < 55){
+				if(Green.verify(this)){return true;}
+				if(Time.current > timeout){
+					if(Green.verify(this)){return true;}
+					if(Gyroscope.inPoint() && CrossPath.verify(refsensor_) && !refsensor_.isColored()){
+						crossCallback();
+						return true;
 					}
 					break;
 				}
@@ -62,17 +43,17 @@ public class FollowLine{
 			Servo.foward(this.velocity);
 			Time.sleep(32, () => Green.verify(this));
 			Servo.stop();
-			if(Green.verify(this)){return;}
+			if(Green.verify(this)){return true;}
 			if((this.lastGreen.millis + 320) > Time.current.millis){
-				return;
-			}else if(CrossPath.verify(this.s2)){
-				CrossPath.findLineRight(this);
-				return;
+				return true;
+			}else if(CrossPath.verify(refsensor_) && !refsensor_.isColored()){
+				crossCallback();
 			}
-			if(Green.verify(this)){return;}
-		}else{
-			Servo.foward(this.velocity);
+			if(Green.verify(this)){return true;}
+			Time.resetTimer();
+			return true;
 		}
+		return false;
 	}
 
 	public void alignSensors(bool right = true){

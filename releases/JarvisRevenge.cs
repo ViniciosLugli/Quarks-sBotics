@@ -16,7 +16,7 @@ static Color cRampFollowLine= new Color(255, 0, 255);
 static long SETUPTIME = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
 static byte UNIQUEID = 0;
-public delegate void MethodHandler();
+public delegate void ActionHandler();
 class Calc{
 	public static float constrain(float amt,float low,float high) => ((amt)<(low)?(low):((amt)>(high)?(high):(amt)));
 
@@ -110,7 +110,7 @@ public static class Time{
 	public static void resetTimer() => bc.ResetTimer();
 
 	public static void sleep(int ms) => bc.Wait(ms);
-	public static void sleep(int ms, MethodHandler callwhile) {
+	public static void sleep(int ms, ActionHandler callwhile) {
 		int toWait = Time.current.millis + ms;
 		while (Time.current.millis < toWait){callwhile();}
 	}
@@ -607,44 +607,25 @@ public static class FloorRoute{
 		public void proc(){
 			Log.proc();
 			this.debugSensors();
-			if(Green.verify(this)){return;}
-			if(this.s1.light.raw < 55 && !this.s1.isColored()){
-				Servo.left();
-				Time.resetTimer();
-				while(this.s1.light.raw < 55){
-					if(Green.verify(this)){return;}
-					if(Time.timer.millis > 144){
-						if(Green.verify(this)){return;}
-						if(Gyroscope.inPoint() && CrossPath.verify(this.s1)){
-							CrossPath.findLineLeft(this);
-							return;
-						}
-						break;
-					}
-				}
-				Time.sleep(32, () => Green.verify(this));
-				Servo.foward(this.velocity);
-				Time.sleep(32, () => Green.verify(this));
-				Servo.stop();
-				if(Green.verify(this)){return;}
-				if((this.lastGreen.millis + 320) > Time.current.millis){
-					return;
-				}else if(CrossPath.verify(this.s1)){
-					CrossPath.findLineLeft(this);
-					return;
-				}
-				if(Green.verify(this)){return;}
 	
-			}else if(this.s2.light.raw < 55 && !this.s2.isColored()){
-				Servo.right();
-				Time.resetTimer();
-				while(this.s2.light.raw < 55){
-					if(Green.verify(this)){return;}
-					if(Time.timer.millis > 144){
-						if(Green.verify(this)){return;}
-						if(Gyroscope.inPoint() && CrossPath.verify(this.s2)){
-							CrossPath.findLineRight(this);
-							return;
+			if(Green.verify(this)){return;}
+	
+			if(checkSensor(ref this.s1, () => Servo.left(), () => CrossPath.findLineLeft(this))){}
+			else if(checkSensor(ref this.s2, () => Servo.right(), () => CrossPath.findLineRight(this))){}
+			else{Servo.foward(this.velocity); Security.verify(this);}
+		}
+	
+		private bool checkSensor(ref Reflective refsensor_, ActionHandler correctCallback, ActionHandler crossCallback){
+			if(refsensor_.light.raw < 55 && !refsensor_.isColored()){
+				correctCallback();
+				Clock timeout = new Clock(Time.current.millis + 144);
+				while(refsensor_.light.raw < 55){
+					if(Green.verify(this)){return true;}
+					if(Time.current > timeout){
+						if(Green.verify(this)){return true;}
+						if(Gyroscope.inPoint() && CrossPath.verify(refsensor_) && !refsensor_.isColored()){
+							crossCallback();
+							return true;
 						}
 						break;
 					}
@@ -653,17 +634,17 @@ public static class FloorRoute{
 				Servo.foward(this.velocity);
 				Time.sleep(32, () => Green.verify(this));
 				Servo.stop();
-				if(Green.verify(this)){return;}
+				if(Green.verify(this)){return true;}
 				if((this.lastGreen.millis + 320) > Time.current.millis){
-					return;
-				}else if(CrossPath.verify(this.s2)){
-					CrossPath.findLineRight(this);
-					return;
+					return true;
+				}else if(CrossPath.verify(refsensor_) && !refsensor_.isColored()){
+					crossCallback();
 				}
-				if(Green.verify(this)){return;}
-			}else{
-				Servo.foward(this.velocity);
+				if(Green.verify(this)){return true;}
+				Time.resetTimer();
+				return true;
 			}
+			return false;
 		}
 	
 		public void alignSensors(bool right = true){
@@ -688,21 +669,20 @@ public static class FloorRoute{
 			CrossPath.notify();
 			Log.clear();
 			Log.proc();
-			Degrees initialDefault = new Degrees(Gyroscope.x.raw - 75);
 			Degrees max = new Degrees(Gyroscope.x.raw - 90);
 			Servo.encoder(7f);
 			Servo.left();
 			while(true){
-				if(CrossPath.checkLine(Follower)){return;}
+				if(CrossPath.checkLine(Follower)){Time.resetTimer();return;}
 				if(Gyroscope.x % max){
 					max = new Degrees(Gyroscope.x.raw + 165);
 					Servo.right();
 					while(true){
-						if(CrossPath.checkLine(Follower)){return;}
+						if(CrossPath.checkLine(Follower)){Time.resetTimer();return;}
 						if (Gyroscope.x % max){
-							Servo.left();
-							while(!(Gyroscope.x % initialDefault)){}
-							Servo.stop();
+							Servo.nextAngleLeft();
+							Servo.rotate(-72);
+							Time.resetTimer();
 							return;
 						}
 					}
@@ -714,21 +694,20 @@ public static class FloorRoute{
 			CrossPath.notify();
 			Log.clear();
 			Log.proc();
-			Degrees initialDefault = new Degrees(Gyroscope.x.raw + 75);
 			Degrees max = new Degrees(Gyroscope.x.raw + 90);
 			Servo.encoder(7f);
 			Servo.right();
 			while(true){
-				if(CrossPath.checkLine(Follower)){return;}
+				if(CrossPath.checkLine(Follower)){Time.resetTimer();return;}
 				if(Gyroscope.x % max){
 					max = new Degrees(Gyroscope.x.raw - 165);
 					Servo.left();
 					while (true){
-						if(CrossPath.checkLine(Follower)){return;}
+						if(CrossPath.checkLine(Follower)){Time.resetTimer();return;}
 						if (Gyroscope.x % max){
-							Servo.right();
-							while(!(Gyroscope.x % initialDefault)){}
-							Servo.stop();
+							Servo.nextAngleRight();
+							Servo.rotate(72);
+							Time.resetTimer();
 							return;
 						}
 					}
@@ -775,7 +754,7 @@ public static class FloorRoute{
 			Log.clear();
 			Log.proc();
 			Servo.encoder(14f);
-			Servo.rotate(-20f);
+			Servo.rotate(-25f);
 			Degrees maxLeft = new Degrees(Gyroscope.x.raw - 87);
 			Servo.left();
 			while((!refsensor_.hasLine()) && (!(Gyroscope.x % maxLeft))){}
@@ -788,7 +767,7 @@ public static class FloorRoute{
 			Log.clear();
 			Log.proc();
 			Servo.encoder(14f);
-			Servo.rotate(20f);
+			Servo.rotate(25f);
 			Degrees maxRight = new Degrees(Gyroscope.x.raw + 87);
 			Servo.right();
 			while((!refsensor_.hasLine()) && (!(Gyroscope.x % maxRight))){}
@@ -803,13 +782,14 @@ public static class FloorRoute{
 				Time.sleep(32);
 				Servo.stop();
 				if(Follower.s1.rgb.hasGreen() && Follower.s2.rgb.hasGreen()){
-					findLineBack();
+					Green.findLineBack();
 				}else if(Follower.s1.rgb.hasGreen()){
-					findLineLeft(ref Follower.s2);
+					Green.findLineLeft(ref Follower.s2);
 				}else if(Follower.s2.rgb.hasGreen()){
-					findLineRight(ref Follower.s1);
+					Green.findLineRight(ref Follower.s1);
 				}
 				Follower.lastGreen = Time.current;
+				Time.resetTimer();
 				return true;
 			}else{
 				return false;
@@ -826,7 +806,7 @@ public static class FloorRoute{
 		private byte distance;
 	
 		public void verify(){
-			if(uObs.distance.raw < this.distance && Time.current.millis > 2000){
+			if(uObs.distance.raw > 16 && uObs.distance.raw < this.distance && Time.current.millis > 2000){
 				this.dodge();
 				this.verify();
 			}
@@ -850,12 +830,8 @@ public static class FloorRoute{
 	}
 	static private class Security{
 		public static void verify(FloorRoute.FollowLine Follower){
-			if(Time.timer.millis > (2800 - (Follower.velocity * 10))){
-				if(Gyroscope.inPoint()){
-					Security.checkInLine(Follower, () => Security.backToLine(Follower));
-				}else{
-					Security.backToLine(Follower);
-				}
+			if(Time.timer.millis > (2800 - (Follower.velocity * 13)) && mainRescue.rampTimer == 0){
+				Security.checkInLine(Follower, () => Security.backToLine(Follower));
 				Time.resetTimer();
 			}
 		}
@@ -867,13 +843,21 @@ public static class FloorRoute{
 			Servo.encoder(-3);
 		}
 	
-		private static void checkInLine(FloorRoute.FollowLine Follower, MethodHandler callback){
-			Clock rTimer = new Clock(Time.current.millis + 128);
+		private static void checkInLine(FloorRoute.FollowLine Follower, ActionHandler callback){
+			Clock timeout = new Clock(Time.current.millis + 256);
 			while(!(Follower.s1.light.raw < 55) && !(Follower.s2.light.raw < 55) ){
-				Servo.rotate(-2f);
-				callback();
+				Servo.left();
+				if(Time.current > timeout){
+					Servo.right();
+					Time.sleep(256);
+					Servo.stop();
+					callback();
+					return;
+				}
 			}
-			Servo.rotate(-1.5f);
+			Servo.right();
+			Time.sleep(timeout - Time.current);
+			Servo.stop();
 		}
 	}
 }
@@ -947,20 +931,20 @@ public class RescueRoute{
 		mainRampFollowLine = new RampFollowLine(ref refs1_, ref refs2_, velocity_);
 	}
 
-	private int rampTimer = 0;
+	public int rampTimer = 0;
 	private RampFollowLine mainRampFollowLine;
 
 	public void verify(){
 		if(upRamp.isOnRange(Gyroscope.z) && (uRight.distance.raw < 40)){
-			if(rampTimer == 0){
-				rampTimer = Time.current.millis + 2000;
+			if(this.rampTimer == 0){
+				this.rampTimer = Time.current.millis + 2000;
 
-			}else if(Time.current.millis > rampTimer){
+			}else if(Time.current.millis > this.rampTimer){
 				Servo.stop();
 				this.main();
 			}
 		}else{
-			rampTimer = 0;
+			this.rampTimer = 0;
 		}
 	}
 
