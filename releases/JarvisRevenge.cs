@@ -356,11 +356,20 @@ public class Reflective{
 				bc.ReturnBlue((int)this.SensorIndex)
 			);
 	}
-	public bool hasLine() => bc.ReturnRed((int)this.SensorIndex) < 35 && bc.ReturnGreen((int)this.SensorIndex) < 35;
+	public bool hasLine() => bc.ReturnRed((int)this.SensorIndex) < 50 && bc.ReturnGreen((int)this.SensorIndex) < 50;
 
 	public bool isMat() => bc.ReturnRed((int)this.SensorIndex) > 50;
 
-	public bool isColored() => bc.ReturnRed((int)this.SensorIndex) != bc.ReturnBlue((int)this.SensorIndex);
+	public bool isColored(){
+		for (int i = 0; i < 4; i++){
+			float r = bc.ReturnRed((int)this.SensorIndex);
+			float b = bc.ReturnBlue((int)this.SensorIndex);
+			if(!((r + 2) > b && (r - 2) < b)){
+				return true;
+			}
+		}
+		return false;
+	}
 
 	public void NOP(){
 		Log.clear();
@@ -716,22 +725,22 @@ public static class FloorRoute{
 		}
 	
 		public static bool checkLine(FloorRoute.FollowLine Follower){
-			if(Follower.s1.light.raw < 55 && !Follower.s1.isColored()){
-				Buzzer.play(sFindLine);
+			if(Follower.s1.hasLine()){
 				Servo.stop();
+				Buzzer.play(sFindLine);
 				Servo.rotate(-2f);
 				return true;
 			}
-			if(Follower.s2.light.raw < 55 && !Follower.s2.isColored()){
-				Buzzer.play(sFindLine);
+			if(Follower.s2.hasLine()){
 				Servo.stop();
+				Buzzer.play(sFindLine);
 				Servo.rotate(2f);
 				return true;
 			}
 			return false;
 		}
 	
-		public static bool verify(Reflective tsensor) => tsensor.light.raw < 45 && !tsensor.isColored();
+		public static bool verify(Reflective tsensor) => tsensor.light.raw < 45 && !tsensor.isMat() && !tsensor.isColored();
 	}
 	public class Green{
 	

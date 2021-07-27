@@ -55,20 +55,20 @@ public static class CrossPath{
 	}
 
 	public static bool checkLine(FloorRoute.FollowLine Follower){
-		if(Follower.s1.light.raw < 55 && !Follower.s1.isColored()){
-			Buzzer.play(sFindLine);
+		if(Follower.s1.hasLine()){
 			Servo.stop();
+			Buzzer.play(sFindLine);
 			Servo.rotate(-2f);
 			return true;
 		}
-		if(Follower.s2.light.raw < 55 && !Follower.s2.isColored()){
-			Buzzer.play(sFindLine);
+		if(Follower.s2.hasLine()){
 			Servo.stop();
+			Buzzer.play(sFindLine);
 			Servo.rotate(2f);
 			return true;
 		}
 		return false;
 	}
 
-	public static bool verify(Reflective tsensor) => tsensor.light.raw < 45 && !tsensor.isColored();
+	public static bool verify(Reflective tsensor) => tsensor.light.raw < 45 && !tsensor.isMat() && !tsensor.isColored();
 }

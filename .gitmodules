@@ -1,0 +1,3 @@
+[submodule "sBotics-viewer"]
+	path = sBotics-viewer
+	url = https://github.com/ViniciosLugli/sBotics-viewer
