@@ -5,6 +5,9 @@ static Sound sTurnGreen = new Sound("C3", 60);
 static Sound sFakeGreen = new Sound("G", 100);
 static Sound sAlertOffline = new Sound("D#", 100);
 static Sound sFindLine = new Sound("C1", 50);
+static Sound sMultiplesCross = new Sound("E", 80);
+static Sound sRescueFindArea = new Sound("C2", 120);
+static Sound sLifting = new Sound("G", 120);
 
 static Color cFollowLine = new Color(255, 255, 255);
 static Color cTurnNotGreen = new Color(0, 0, 0);
@@ -161,8 +164,8 @@ public struct Sound{
 }
 
 public static class Buzzer{
-	public static void play(string note, int time=100) => bc.PlayNote(0, note, time);
-	public static void play(Sound sound) => bc.PlayNote(0, sound.note, sound.time);
+	public static void play(string note, int time=100, int index = 0) => bc.PlayNote(index, note, time);
+	public static void play(Sound sound, int index = 0) => bc.PlayNote(index, sound.note, sound.time);
 
 	public static void stop() => bc.StopSound(0);
 }
@@ -260,6 +263,8 @@ public static class Gyroscope{
 			return false;
 		}
 	}
+
+	public static bool isLifted() => Gyroscope.z.raw > 300 && Gyroscope.z.raw < 358;
 
 	public static void NOP(){
 		Log.clear();
@@ -528,7 +533,22 @@ public static class Servo{
 
 	public static void stop() => bc.Move(0, 0);
 
+	public static void antiLifting(int velocity){
+		if(Gyroscope.isLifted()){
+			Log.proc();
+			Buzzer.play(sLifting);
+			Servo.stop();
+			while(Gyroscope.isLifted()){
+				Servo.backward(200);
+			}
+			Time.sleep(128);
+			Servo.stop();
+			Servo.foward(velocity);
+		}
+	}
+
 	public static void nextAngleRight(byte ignoreAngles = 0){
+		Log.proc();
 		Servo.rotate(Math.Abs(ignoreAngles));
 		Servo.right();
 		while(!Gyroscope.inPoint(false)){}
@@ -536,6 +556,7 @@ public static class Servo{
 	}
 
 	public static void nextAngleLeft(byte ignoreAngles = 0){
+		Log.proc();
 		Servo.rotate(-ignoreAngles);
 		Servo.left();
 		while(!Gyroscope.inPoint(false)){}
@@ -569,6 +590,62 @@ public static class Servo{
 		}
 		while(!(Gyroscope.x % alignLocal)){}
 		Servo.stop();
+	}
+
+	public static void ultraGoTo(float position, ref Ultrassonic ultra, ActionHandler callback = null){
+		Log.proc();
+		if(position > ultra.distance.raw){
+			Servo.backward(200);
+			while(position > ultra.distance.raw){
+				Servo.antiLifting(200);
+				if(Servo.speed() < 0.5f && Time.timer.millis > 500){
+					if(!(callback is null)){callback();}
+					break;
+				}
+				Log.info(Formatter.parse($"ultra: {ultra.distance.raw}", new string[]{"i","color=#505050", "align=center"}));
+			}
+			Servo.stop();
+		}else{
+			Servo.foward(200);
+			while(position < ultra.distance.raw){
+				Servo.antiLifting(200);
+				if(Servo.speed() < 0.5f && Time.timer.millis > 500){
+					if(!(callback is null)){callback();}
+					break;
+				}
+				Log.info(Formatter.parse($"ultra: {ultra.distance.raw}", new string[]{"i","color=#505050", "align=center"}));
+			}
+			Servo.stop();
+		}
+		Log.clear();
+	}
+
+	public static void ultraGoTo(Distance dist, ref Ultrassonic ultra, ActionHandler callback = null){
+		Log.proc();
+		if(dist > ultra.distance){
+			Servo.backward(200);
+			while(dist > ultra.distance){
+				Servo.antiLifting(200);
+				if(Servo.speed() < 0.5f && Time.timer.millis > 500){
+					if(!(callback is null)){callback();}
+					break;
+				}
+				Log.info(Formatter.parse($"ultra: {ultra.distance.raw}", new string[]{"i","color=#505050", "align=center"}));
+			}
+			Servo.stop();
+		}else{
+			Servo.foward(200);
+			while(dist < ultra.distance){
+				Servo.antiLifting(200);
+				if(Servo.speed() < 0.5f && Time.timer.millis > 500){
+					if(!(callback is null)){callback();}
+					break;
+				}
+				Log.info(Formatter.parse($"ultra: {ultra.distance.raw}", new string[]{"i","color=#505050", "align=center"}));
+			}
+			Servo.stop();
+		}
+		Log.clear();
 	}
 }
 public struct Vector2{
@@ -608,6 +685,7 @@ public static class FloorRoute{
 		public Reflective s1, s2;
 		public int velocity = 0;
 		public Clock lastGreen = new Clock(0);
+		public Clock lastCrossPath = new Clock(0);
 	
 		private void debugSensors(){
 			Log.info(Formatter.parse($"{this.s1.light.raw} | {this.s2.light.raw}", new string[]{"align=center", "color=#FFEA79", "b"}));
@@ -627,12 +705,12 @@ public static class FloorRoute{
 		private bool checkSensor(ref Reflective refsensor_, ActionHandler correctCallback, ActionHandler crossCallback){
 			if(refsensor_.light.raw < 55 && !refsensor_.isColored()){
 				correctCallback();
-				Clock timeout = new Clock(Time.current.millis + 144);
+				Clock timeout = new Clock(Time.current.millis + 176);
 				while(refsensor_.light.raw < 55){
 					if(Green.verify(this)){return true;}
 					if(Time.current > timeout){
 						if(Green.verify(this)){return true;}
-						if(Gyroscope.inPoint() && CrossPath.verify(refsensor_) && !refsensor_.isColored()){
+						if(CrossPath.verify(refsensor_)){
 							crossCallback();
 							return true;
 						}
@@ -675,49 +753,54 @@ public static class FloorRoute{
 		}
 	
 		public static void findLineLeft(FloorRoute.FollowLine Follower){
-			CrossPath.notify();
-			Log.clear();
-			Log.proc();
-			Degrees max = new Degrees(Gyroscope.x.raw - 90);
-			Servo.encoder(7f);
-			Servo.left();
-			while(true){
-				if(CrossPath.checkLine(Follower)){Time.resetTimer();return;}
-				if(Gyroscope.x % max){
-					max = new Degrees(Gyroscope.x.raw + 165);
-					Servo.right();
-					while(true){
-						if(CrossPath.checkLine(Follower)){Time.resetTimer();return;}
-						if (Gyroscope.x % max){
-							Servo.nextAngleLeft();
-							Servo.rotate(-72);
-							Time.resetTimer();
-							return;
-						}
-					}
-				}
-			}
+			CrossPath.findLineBase(Follower, new ActionHandler[]{() => Servo.left(), () => Servo.right(), () => Servo.nextAngleLeft(10)}, -90);
 		}
 	
 		public static void findLineRight(FloorRoute.FollowLine Follower){
+			CrossPath.findLineBase(Follower, new ActionHandler[]{() => Servo.right(), () => Servo.left(), () => Servo.nextAngleRight(10)}, 90);
+		}
+	
+		private static void findLineBase(FloorRoute.FollowLine Follower, ActionHandler[] turnsCallback, float maxDegrees){
+			if((Follower.lastCrossPath.millis + 256) > Time.current.millis){Buzzer.play(sMultiplesCross);return;}
 			CrossPath.notify();
 			Log.clear();
 			Log.proc();
-			Degrees max = new Degrees(Gyroscope.x.raw + 90);
+			Degrees max = new Degrees(Gyroscope.x.raw + maxDegrees);
 			Servo.encoder(7f);
-			Servo.right();
+			Servo.rotate(-(maxDegrees / 9));
+			turnsCallback[0]();
 			while(true){
-				if(CrossPath.checkLine(Follower)){Time.resetTimer();return;}
+				if(CrossPath.checkLine(Follower)){Follower.lastCrossPath = Time.current;Time.resetTimer();return;}
 				if(Gyroscope.x % max){
-					max = new Degrees(Gyroscope.x.raw - 165);
-					Servo.left();
+					max = new Degrees(Gyroscope.x.raw - (maxDegrees * 2));
+					turnsCallback[1]();
 					while (true){
-						if(CrossPath.checkLine(Follower)){Time.resetTimer();return;}
+						if(CrossPath.checkLine(Follower)){Follower.lastCrossPath = Time.current;Time.resetTimer();return;}
 						if (Gyroscope.x % max){
-							Servo.nextAngleRight();
-							Servo.rotate(72);
-							Time.resetTimer();
-							return;
+							Servo.stop();
+							Servo.encoder(-6f);
+							max = new Degrees(Gyroscope.x.raw + (maxDegrees / 5));
+							turnsCallback[0]();
+							while(true){
+								if(Gyroscope.x % max){
+									Servo.encoder(6f);
+									turnsCallback[2]();
+									Servo.encoder(2.5f);
+									Servo.rotate(maxDegrees);
+									Follower.lastCrossPath = Time.current;
+									Time.resetTimer();
+									return;
+								}
+								if(Follower.s1.hasLine() || Follower.s2.hasLine()){
+									Servo.encoder(6f);
+									turnsCallback[2]();
+									Servo.encoder(2.5f);
+									Servo.rotate(-maxDegrees);
+									Follower.lastCrossPath = Time.current;
+									Time.resetTimer();
+									return;
+								}
+							}
 						}
 					}
 				}
@@ -744,8 +827,8 @@ public static class FloorRoute{
 	}
 	public class Green{
 	
-		private static void notify(){
-			Buzzer.play(sTurnGreen);
+		private static void notify(int index = 0){
+			Buzzer.play(sTurnGreen, index);
 			Led.on(cTurnGreen);
 		}
 	
@@ -757,31 +840,25 @@ public static class FloorRoute{
 			Servo.rotate(180f);
 		}
 	
-	
-		public static void findLineLeft(ref Reflective refsensor_){
-			Green.notify();
-			Log.clear();
-			Log.proc();
-			Servo.encoder(14f);
-			Servo.rotate(-25f);
-			Degrees maxLeft = new Degrees(Gyroscope.x.raw - 87);
-			Servo.left();
-			while((!refsensor_.hasLine()) && (!(Gyroscope.x % maxLeft))){}
-			Servo.stop();
-			Servo.rotate(3f);
+		public static void findLineLeft(FloorRoute.FollowLine Follower){
+			Green.findLineBase(Follower, () => Servo.left(), -25, -87);
 		}
 	
-		public static void findLineRight(ref Reflective refsensor_){
+		public static void findLineRight(FloorRoute.FollowLine Follower){
+			Green.findLineBase(Follower, () => Servo.right(), 25, 87);
+		}
+	
+		private static void findLineBase(FloorRoute.FollowLine Follower, ActionHandler turnCallback, float ignoreDegrees, float maxDegrees){
 			Green.notify();
 			Log.clear();
 			Log.proc();
 			Servo.encoder(14f);
-			Servo.rotate(25f);
-			Degrees maxRight = new Degrees(Gyroscope.x.raw + 87);
-			Servo.right();
-			while((!refsensor_.hasLine()) && (!(Gyroscope.x % maxRight))){}
-			Servo.stop();
-			Servo.rotate(-3f);
+			Servo.rotate(ignoreDegrees);
+			Degrees maxRight = new Degrees(Gyroscope.x.raw + maxDegrees);
+			turnCallback();
+			while(!(Gyroscope.x % maxRight)){
+				if(CrossPath.checkLine(Follower)){ break; }
+			}
 		}
 	
 		public static bool verify(FloorRoute.FollowLine Follower){
@@ -793,9 +870,9 @@ public static class FloorRoute{
 				if(Follower.s1.rgb.hasGreen() && Follower.s2.rgb.hasGreen()){
 					Green.findLineBack();
 				}else if(Follower.s1.rgb.hasGreen()){
-					Green.findLineLeft(ref Follower.s2);
+					Green.findLineLeft(Follower);
 				}else if(Follower.s2.rgb.hasGreen()){
-					Green.findLineRight(ref Follower.s1);
+					Green.findLineRight(Follower);
 				}
 				Follower.lastGreen = Time.current;
 				Time.resetTimer();
@@ -815,7 +892,7 @@ public static class FloorRoute{
 		private byte distance;
 	
 		public void verify(){
-			if(uObs.distance.raw > 16 && uObs.distance.raw < this.distance && Time.current.millis > 2000){
+			if(uObs.distance.raw > 16 && uObs.distance.raw < this.distance && Time.current.millis > 3000){
 				this.dodge();
 				this.verify();
 			}
@@ -846,10 +923,7 @@ public static class FloorRoute{
 		}
 	
 		private static void backToLine(FloorRoute.FollowLine Follower){
-			Servo.backward(Follower.velocity);
-			while(!(Follower.s1.light.raw < 55) && !(Follower.s2.light.raw < 55)){}
-			Servo.stop();
-			Servo.encoder(-3);
+			while(!Security.findLine(Follower)){Servo.encoder(-5);}
 		}
 	
 		private static void checkInLine(FloorRoute.FollowLine Follower, ActionHandler callback){
@@ -868,9 +942,55 @@ public static class FloorRoute{
 			Time.sleep(timeout - Time.current);
 			Servo.stop();
 		}
+	
+		private static bool findLine(FloorRoute.FollowLine Follower){
+			Degrees max = new Degrees(Gyroscope.x.raw - 20);
+			Servo.left();
+			while (!(Gyroscope.x % max)){
+				if(CrossPath.checkLine(Follower)){
+					Servo.stop();
+					return true;
+				}
+			}
+			Servo.stop();
+			max = new Degrees(Gyroscope.x.raw + 20);
+			Servo.right();
+			while(!(Gyroscope.x % max)){
+				if(CrossPath.checkLine(Follower)){
+					Servo.stop();
+					return true;
+				}
+			}
+			Servo.stop();
+			return false;
+		}
 	}
 }
 public class RescueRoute{
+	public struct RescueInfo{
+		public sbyte triangle;
+		public sbyte exit;
+	
+		public void setTriangle(sbyte triangle_){
+			if(this.triangle != 0){return;}
+			Buzzer.play(sRescueFindArea);
+			Log.info($"Rescue triangle on: {triangle_}");
+			this.triangle = triangle_;
+			RescueAnalyzer.exportRescue(this);
+		}
+	
+		public void setExit(sbyte exit_){
+			if(this.exit != 0){return;}
+			Buzzer.play(sRescueFindArea);
+			Log.info($"Rescue exit on: {exit_}");
+			this.exit = exit_;
+			RescueAnalyzer.exportRescue(this);
+		}
+	
+		public bool hasInfos(){
+			return this.triangle != 0 && this.exit != 0;
+		}
+	}
 	public class Victim{
 		private bool isRescued { get; set; } = false;
 		public Vector2 position { get; set; }
@@ -908,11 +1028,11 @@ public class RescueRoute{
 			bc.SetFileConsolePath("C:/Users/vinic/Documents/scripts/python/sBotics-viewer/res/out.txt");
 		}
 	
-		public static void exportVictim(RescueRoute.AliveVictim victim) => bc.WriteText($"[ALIVEVICTIM]({victim.infos()})");
-		public static void exportVictim(RescueRoute.DeadVictim victim) => bc.WriteText($"[DEADVICTIM]({victim.infos()})");
+		public static void exportVictim(AliveVictim victim) => bc.WriteText($"[ALIVEVICTIM]({victim.infos()})");
+		public static void exportVictim(DeadVictim victim) => bc.WriteText($"[DEADVICTIM]({victim.infos()})");
 		public static void exportPoint(Vector2 vector, string color, string info = "") => bc.WriteText($"[POINT]('position':[{vector.x},{vector.y}],'color':{color},'info':{info})");
 		public static void exportLine(Vector2 vector1, Vector2 vector2, string color, string info = "") => bc.WriteText($"[LINE]('position1':[{vector1.x},{vector1.y}],'position2':[{vector2.x},{vector2.y}],'color':{color},'info':{info})");
-		public static void exportRescue(byte? triangle, byte? exit) => bc.WriteText($"[RESCUE]('triangle':{triangle}, 'exit':{exit})");
+		public static void exportRescue(RescueInfo rescue) => bc.WriteText($"[RESCUE]('triangle':{rescue.triangle}, 'exit':{rescue.exit})");
 		public static void exportClearLines() => bc.WriteText($"[CLEARLINES]()");
 	}
 	public class RampFollowLine{
@@ -933,8 +1053,83 @@ public class RescueRoute{
 		public void proc(){
 			Log.proc();
 			this.debugSensors();
+			if(this.s1.light.raw < 55 && !this.s1.isColored()){
+				Servo.rotate(-1);
+				Servo.encoder(1);
+			}else if(this.s2.light.raw < 55 && !this.s2.isColored()){
+				Servo.rotate(1);
+				Servo.encoder(1);
+			}else{
+				Servo.foward(this.velocity);
+			}
 		}
 	}
+	public class RescueBrain{
+		//public RescueBrain(){}
+	
+		private const short RESCUE_SIZE = 300;
+		private RescueInfo rescue = new RescueInfo();
+	
+		private void findExit(sbyte exitIndex, int maxTime = 1200, ActionHandler callback = null){
+			Log.proc();
+			Time.resetTimer();
+			Servo.foward(200);
+			while(Time.timer.millis < maxTime){
+				Servo.antiLifting(200);
+				if(uRight.distance.raw > RESCUE_SIZE){
+					rescue.setExit(exitIndex);
+					if(!(callback is null)){
+						callback();
+					}
+				}
+				Log.info(Formatter.parse($"uRight: {uRight.distance.raw}", new string[]{"i","color=#505050", "align=center"}));
+			}
+			Servo.stop();
+		}
+	
+		public void findTriangleArea(){
+			findExit(1);
+			Time.resetTimer();
+			Servo.ultraGoTo(40, ref uFrontal, () => {
+				this.rescue.setTriangle(3);
+			});
+	
+			if(this.rescue.exit == 1){
+				this.rescue.setTriangle(2);
+			}
+	
+			if(!this.rescue.hasInfos()){
+				Servo.alignNextAngle();
+				Servo.rotate(-180);
+				Servo.alignNextAngle();
+				findExit(3, 500);
+				Servo.backward(200);
+				Time.sleep(500);
+				Servo.stop();
+				this.rescue.setExit(2);
+				if(this.rescue.triangle == 0){
+					Servo.rotate(-90);
+					Servo.alignNextAngle();
+					Time.resetTimer();
+					Servo.ultraGoTo(40, ref uFrontal, () => {
+						this.rescue.setTriangle(2);
+					});
+				}
+				if(this.rescue.triangle == 0){
+					this.rescue.setTriangle(1);
+				}
+			}
+		}
+	}
+	
+	//Idealização aaaaaaaaa
+	/*
+	Objetivos de caminho:
+		1° encontrar resgate e saída;
+		2° encontrar e mapear as bolinhas próximas e encontrar a melhor solução de tempo em relação a pontuaçao;
+		3° refazer o segundo processo de forma mais precisa / lenta em buscad e pegar todas as áreas do resgate;
+		4° ir até a saída e terminar o pércurso.
+	*/
 
 	public RescueRoute(ref Reflective refs1_, ref Reflective refs2_, int velocity_){
 		mainRampFollowLine = new RampFollowLine(ref refs1_, ref refs2_, velocity_);
@@ -943,8 +1138,10 @@ public class RescueRoute{
 	public int rampTimer = 0;
 	private RampFollowLine mainRampFollowLine;
 
+	private RescueBrain brain = new RescueBrain();
+
 	public void verify(){
-		if(upRamp.isOnRange(Gyroscope.z) && (uRight.distance.raw < 40)){
+		if(upRamp.isOnRange(Gyroscope.z) && (uRight.distance.raw < 42)){
 			if(this.rampTimer == 0){
 				this.rampTimer = Time.current.millis + 2000;
 
@@ -965,12 +1162,22 @@ public class RescueRoute{
 
 	private void main(){
 		RescueAnalyzer.setup();
+		while(upRamp.isOnRange(Gyroscope.z) && uRight.distance.raw < 42){
+			mainRampFollowLine.proc();
+		}
+		Servo.encoder(4, 200);
+		Servo.encoder(-1, 200);
+		Servo.encoder(3, 200);
+		Servo.encoder(-1, 200);
+		Servo.encoder(3, 200);
+		Servo.encoder(-1, 200);
+		Servo.encoder(3, 200);
+		Servo.encoder(-1, 200);
+		Servo.alignNextAngle();
+		Servo.ultraGoTo(260, ref uFrontal);
+
+		this.brain.findTriangleArea();
 		for(;;){
-			while(upRamp.isOnRange(Gyroscope.z)){
-				mainRampFollowLine.proc();
-			}
-			Servo.encoder(10);
-			Time.debug();
 		}
 	}
 }
@@ -986,7 +1193,7 @@ static Ultrassonic uFrontal = new Ultrassonic(0), uRight = new Ultrassonic(1);
 
 static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, 135);
 static FloorRoute.Obstacle mainObstacle = new FloorRoute.Obstacle(ref uFrontal, 26);
-static RescueRoute mainRescue = new RescueRoute(ref s1, ref s2, 300);
+static RescueRoute mainRescue = new RescueRoute(ref s1, ref s2, 180);
 //Instance modules ---------------------------------------------
 
 

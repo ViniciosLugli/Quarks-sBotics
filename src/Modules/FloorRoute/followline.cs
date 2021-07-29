@@ -8,6 +8,7 @@ public class FollowLine{
 	public Reflective s1, s2;
 	public int velocity = 0;
 	public Clock lastGreen = new Clock(0);
+	public Clock lastCrossPath = new Clock(0);
 
 	private void debugSensors(){
 		Log.info(Formatter.parse($"{this.s1.light.raw} | {this.s2.light.raw}", new string[]{"align=center", "color=#FFEA79", "b"}));
@@ -27,12 +28,12 @@ public class FollowLine{
 	private bool checkSensor(ref Reflective refsensor_, ActionHandler correctCallback, ActionHandler crossCallback){
 		if(refsensor_.light.raw < 55 && !refsensor_.isColored()){
 			correctCallback();
-			Clock timeout = new Clock(Time.current.millis + 144);
+			Clock timeout = new Clock(Time.current.millis + 176);
 			while(refsensor_.light.raw < 55){
 				if(Green.verify(this)){return true;}
 				if(Time.current > timeout){
 					if(Green.verify(this)){return true;}
-					if(Gyroscope.inPoint() && CrossPath.verify(refsensor_) && !refsensor_.isColored()){
+					if(CrossPath.verify(refsensor_)){
 						crossCallback();
 						return true;
 					}

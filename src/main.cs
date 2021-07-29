@@ -35,7 +35,7 @@ static Ultrassonic uFrontal = new Ultrassonic(0), uRight = new Ultrassonic(1);
 
 static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, 135);
 static FloorRoute.Obstacle mainObstacle = new FloorRoute.Obstacle(ref uFrontal, 26);
-static RescueRoute mainRescue = new RescueRoute(ref s1, ref s2, 300);
+static RescueRoute mainRescue = new RescueRoute(ref s1, ref s2, 180);
 //Instance modules ---------------------------------------------
 
 

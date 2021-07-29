@@ -1,7 +1,7 @@
 public class Green{
 
-	private static void notify(){
-		Buzzer.play(sTurnGreen);
+	private static void notify(int index = 0){
+		Buzzer.play(sTurnGreen, index);
 		Led.on(cTurnGreen);
 	}
 
@@ -13,31 +13,25 @@ public class Green{
 		Servo.rotate(180f);
 	}
 
-
-	public static void findLineLeft(ref Reflective refsensor_){
-		Green.notify();
-		Log.clear();
-		Log.proc();
-		Servo.encoder(14f);
-		Servo.rotate(-25f);
-		Degrees maxLeft = new Degrees(Gyroscope.x.raw - 87);
-		Servo.left();
-		while((!refsensor_.hasLine()) && (!(Gyroscope.x % maxLeft))){}
-		Servo.stop();
-		Servo.rotate(3f);
+	public static void findLineLeft(FloorRoute.FollowLine Follower){
+		Green.findLineBase(Follower, () => Servo.left(), -25, -87);
 	}
 
-	public static void findLineRight(ref Reflective refsensor_){
+	public static void findLineRight(FloorRoute.FollowLine Follower){
+		Green.findLineBase(Follower, () => Servo.right(), 25, 87);
+	}
+
+	private static void findLineBase(FloorRoute.FollowLine Follower, ActionHandler turnCallback, float ignoreDegrees, float maxDegrees){
 		Green.notify();
 		Log.clear();
 		Log.proc();
 		Servo.encoder(14f);
-		Servo.rotate(25f);
-		Degrees maxRight = new Degrees(Gyroscope.x.raw + 87);
-		Servo.right();
-		while((!refsensor_.hasLine()) && (!(Gyroscope.x % maxRight))){}
-		Servo.stop();
-		Servo.rotate(-3f);
+		Servo.rotate(ignoreDegrees);
+		Degrees maxRight = new Degrees(Gyroscope.x.raw + maxDegrees);
+		turnCallback();
+		while(!(Gyroscope.x % maxRight)){
+			if(CrossPath.checkLine(Follower)){ break; }
+		}
 	}
 
 	public static bool verify(FloorRoute.FollowLine Follower){
@@ -49,9 +43,9 @@ public class Green{
 			if(Follower.s1.rgb.hasGreen() && Follower.s2.rgb.hasGreen()){
 				Green.findLineBack();
 			}else if(Follower.s1.rgb.hasGreen()){
-				Green.findLineLeft(ref Follower.s2);
+				Green.findLineLeft(Follower);
 			}else if(Follower.s2.rgb.hasGreen()){
-				Green.findLineRight(ref Follower.s1);
+				Green.findLineRight(Follower);
 			}
 			Follower.lastGreen = Time.current;
 			Time.resetTimer();

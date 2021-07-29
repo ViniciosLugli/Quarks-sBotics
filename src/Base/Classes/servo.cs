@@ -18,7 +18,22 @@ public static class Servo{
 
 	public static void stop() => bc.Move(0, 0);
 
+	public static void antiLifting(int velocity){
+		if(Gyroscope.isLifted()){
+			Log.proc();
+			Buzzer.play(sLifting);
+			Servo.stop();
+			while(Gyroscope.isLifted()){
+				Servo.backward(200);
+			}
+			Time.sleep(128);
+			Servo.stop();
+			Servo.foward(velocity);
+		}
+	}
+
 	public static void nextAngleRight(byte ignoreAngles = 0){
+		Log.proc();
 		Servo.rotate(Math.Abs(ignoreAngles));
 		Servo.right();
 		while(!Gyroscope.inPoint(false)){}
@@ -26,6 +41,7 @@ public static class Servo{
 	}
 
 	public static void nextAngleLeft(byte ignoreAngles = 0){
+		Log.proc();
 		Servo.rotate(-ignoreAngles);
 		Servo.left();
 		while(!Gyroscope.inPoint(false)){}
@@ -59,5 +75,61 @@ public static class Servo{
 		}
 		while(!(Gyroscope.x % alignLocal)){}
 		Servo.stop();
+	}
+
+	public static void ultraGoTo(float position, ref Ultrassonic ultra, ActionHandler callback = null){
+		Log.proc();
+		if(position > ultra.distance.raw){
+			Servo.backward(200);
+			while(position > ultra.distance.raw){
+				Servo.antiLifting(200);
+				if(Servo.speed() < 0.5f && Time.timer.millis > 500){
+					if(!(callback is null)){callback();}
+					break;
+				}
+				Log.info(Formatter.parse($"ultra: {ultra.distance.raw}", new string[]{"i","color=#505050", "align=center"}));
+			}
+			Servo.stop();
+		}else{
+			Servo.foward(200);
+			while(position < ultra.distance.raw){
+				Servo.antiLifting(200);
+				if(Servo.speed() < 0.5f && Time.timer.millis > 500){
+					if(!(callback is null)){callback();}
+					break;
+				}
+				Log.info(Formatter.parse($"ultra: {ultra.distance.raw}", new string[]{"i","color=#505050", "align=center"}));
+			}
+			Servo.stop();
+		}
+		Log.clear();
+	}
+
+	public static void ultraGoTo(Distance dist, ref Ultrassonic ultra, ActionHandler callback = null){
+		Log.proc();
+		if(dist > ultra.distance){
+			Servo.backward(200);
+			while(dist > ultra.distance){
+				Servo.antiLifting(200);
+				if(Servo.speed() < 0.5f && Time.timer.millis > 500){
+					if(!(callback is null)){callback();}
+					break;
+				}
+				Log.info(Formatter.parse($"ultra: {ultra.distance.raw}", new string[]{"i","color=#505050", "align=center"}));
+			}
+			Servo.stop();
+		}else{
+			Servo.foward(200);
+			while(dist < ultra.distance){
+				Servo.antiLifting(200);
+				if(Servo.speed() < 0.5f && Time.timer.millis > 500){
+					if(!(callback is null)){callback();}
+					break;
+				}
+				Log.info(Formatter.parse($"ultra: {ultra.distance.raw}", new string[]{"i","color=#505050", "align=center"}));
+			}
+			Servo.stop();
+		}
+		Log.clear();
 	}
 }

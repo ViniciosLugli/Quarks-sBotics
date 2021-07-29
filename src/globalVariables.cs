@@ -4,6 +4,9 @@ static Sound sTurnGreen = new Sound("C3", 60);
 static Sound sFakeGreen = new Sound("G", 100);
 static Sound sAlertOffline = new Sound("D#", 100);
 static Sound sFindLine = new Sound("C1", 50);
+static Sound sMultiplesCross = new Sound("E", 80);
+static Sound sRescueFindArea = new Sound("C2", 120);
+static Sound sLifting = new Sound("G", 120);
 
 static Color cFollowLine = new Color(255, 255, 255);
 static Color cTurnNotGreen = new Color(0, 0, 0);

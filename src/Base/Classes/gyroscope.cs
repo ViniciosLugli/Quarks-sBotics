@@ -29,6 +29,8 @@ public static class Gyroscope{
 		}
 	}
 
+	public static bool isLifted() => Gyroscope.z.raw > 300 && Gyroscope.z.raw < 358;
+
 	public static void NOP(){
 		Log.clear();
 		Log.proc();

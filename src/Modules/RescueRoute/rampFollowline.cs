@@ -16,5 +16,14 @@ public class RampFollowLine{
 	public void proc(){
 		Log.proc();
 		this.debugSensors();
+		if(this.s1.light.raw < 55 && !this.s1.isColored()){
+			Servo.rotate(-1);
+			Servo.encoder(1);
+		}else if(this.s2.light.raw < 55 && !this.s2.isColored()){
+			Servo.rotate(1);
+			Servo.encoder(1);
+		}else{
+			Servo.foward(this.velocity);
+		}
 	}
 }

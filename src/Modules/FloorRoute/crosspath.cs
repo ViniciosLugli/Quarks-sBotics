@@ -5,49 +5,54 @@ public static class CrossPath{
 	}
 
 	public static void findLineLeft(FloorRoute.FollowLine Follower){
-		CrossPath.notify();
-		Log.clear();
-		Log.proc();
-		Degrees max = new Degrees(Gyroscope.x.raw - 90);
-		Servo.encoder(7f);
-		Servo.left();
-		while(true){
-			if(CrossPath.checkLine(Follower)){Time.resetTimer();return;}
-			if(Gyroscope.x % max){
-				max = new Degrees(Gyroscope.x.raw + 165);
-				Servo.right();
-				while(true){
-					if(CrossPath.checkLine(Follower)){Time.resetTimer();return;}
-					if (Gyroscope.x % max){
-						Servo.nextAngleLeft();
-						Servo.rotate(-72);
-						Time.resetTimer();
-						return;
-					}
-				}
-			}
-		}
+		CrossPath.findLineBase(Follower, new ActionHandler[]{() => Servo.left(), () => Servo.right(), () => Servo.nextAngleLeft(10)}, -90);
 	}
 
 	public static void findLineRight(FloorRoute.FollowLine Follower){
+		CrossPath.findLineBase(Follower, new ActionHandler[]{() => Servo.right(), () => Servo.left(), () => Servo.nextAngleRight(10)}, 90);
+	}
+
+	private static void findLineBase(FloorRoute.FollowLine Follower, ActionHandler[] turnsCallback, float maxDegrees){
+		if((Follower.lastCrossPath.millis + 256) > Time.current.millis){Buzzer.play(sMultiplesCross);return;}
 		CrossPath.notify();
 		Log.clear();
 		Log.proc();
-		Degrees max = new Degrees(Gyroscope.x.raw + 90);
+		Degrees max = new Degrees(Gyroscope.x.raw + maxDegrees);
 		Servo.encoder(7f);
-		Servo.right();
+		Servo.rotate(-(maxDegrees / 9));
+		turnsCallback[0]();
 		while(true){
-			if(CrossPath.checkLine(Follower)){Time.resetTimer();return;}
+			if(CrossPath.checkLine(Follower)){Follower.lastCrossPath = Time.current;Time.resetTimer();return;}
 			if(Gyroscope.x % max){
-				max = new Degrees(Gyroscope.x.raw - 165);
-				Servo.left();
+				max = new Degrees(Gyroscope.x.raw - (maxDegrees * 2));
+				turnsCallback[1]();
 				while (true){
-					if(CrossPath.checkLine(Follower)){Time.resetTimer();return;}
+					if(CrossPath.checkLine(Follower)){Follower.lastCrossPath = Time.current;Time.resetTimer();return;}
 					if (Gyroscope.x % max){
-						Servo.nextAngleRight();
-						Servo.rotate(72);
-						Time.resetTimer();
-						return;
+						Servo.stop();
+						Servo.encoder(-6f);
+						max = new Degrees(Gyroscope.x.raw + (maxDegrees / 5));
+						turnsCallback[0]();
+						while(true){
+							if(Gyroscope.x % max){
+								Servo.encoder(6f);
+								turnsCallback[2]();
+								Servo.encoder(2.5f);
+								Servo.rotate(maxDegrees);
+								Follower.lastCrossPath = Time.current;
+								Time.resetTimer();
+								return;
+							}
+							if(Follower.s1.hasLine() || Follower.s2.hasLine()){
+								Servo.encoder(6f);
+								turnsCallback[2]();
+								Servo.encoder(2.5f);
+								Servo.rotate(-maxDegrees);
+								Follower.lastCrossPath = Time.current;
+								Time.resetTimer();
+								return;
+							}
+						}
 					}
 				}
 			}
