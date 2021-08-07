@@ -60,13 +60,13 @@ public static class CrossPath{
 	}
 
 	public static bool checkLine(FloorRoute.FollowLine Follower){
-		if(Follower.s1.hasLine()){
+		if(Follower.s1.light.raw < 55 && !Follower.s1.isColored() && !Follower.s1.isMat()){
 			Servo.stop();
 			Buzzer.play(sFindLine);
 			Servo.rotate(-2f);
 			return true;
 		}
-		if(Follower.s2.hasLine()){
+		if(Follower.s2.light.raw < 55 && !Follower.s2.isColored() && !Follower.s2.isMat()){
 			Servo.stop();
 			Buzzer.play(sFindLine);
 			Servo.rotate(2f);

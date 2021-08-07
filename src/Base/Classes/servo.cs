@@ -18,7 +18,7 @@ public static class Servo{
 
 	public static void stop() => bc.Move(0, 0);
 
-	public static void antiLifting(int velocity){
+	public static void antiLifting(){
 		if(Gyroscope.isLifted()){
 			Log.proc();
 			Buzzer.play(sLifting);
@@ -28,7 +28,8 @@ public static class Servo{
 			}
 			Time.sleep(128);
 			Servo.stop();
-			Servo.foward(velocity);
+			Servo.alignNextAngle();
+			Time.resetTimer();
 		}
 	}
 
@@ -77,56 +78,65 @@ public static class Servo{
 		Servo.stop();
 	}
 
+	public static void alignToAngle(object angle){
+		Log.proc();
+
+		Degrees alignLocal = (angle is Degrees) ? (Degrees)angle : new Degrees((float)angle);
+
+		Log.info(Formatter.parse($"Align to {alignLocal.raw}°", new string[]{"i","color=#505050", "align=center"}));
+
+		if((alignLocal.raw == 0) && (Gyroscope.x.raw > 180)){
+			Servo.right();
+		}else if((alignLocal.raw == 0) && (Gyroscope.x.raw < 180)){
+			Servo.left();
+		}else if(Gyroscope.x < alignLocal){
+			Servo.right();
+		}else if(Gyroscope.x > alignLocal){
+			Servo.left();
+		}
+		while(!(Gyroscope.x % alignLocal)){}
+		Servo.stop();
+	}
+
+	private static bool ultraGoToRecursive(Ultrassonic ultra, ActionHandler callback){
+		Log.info(Formatter.parse($"ultra: {ultra.distance.raw}", new string[]{"i","color=#505050", "align=center"}));
+		Servo.antiLifting();
+		if(Servo.speed() < 0.5f && Time.timer.millis > 500){
+			if(callback != null){callback();}
+			return true;
+		}
+		return false;
+	}
+
 	public static void ultraGoTo(float position, ref Ultrassonic ultra, ActionHandler callback = null){
 		Log.proc();
 		if(position > ultra.distance.raw){
-			Servo.backward(200);
 			while(position > ultra.distance.raw){
-				Servo.antiLifting(200);
-				if(Servo.speed() < 0.5f && Time.timer.millis > 500){
-					if(!(callback is null)){callback();}
-					break;
-				}
-				Log.info(Formatter.parse($"ultra: {ultra.distance.raw}", new string[]{"i","color=#505050", "align=center"}));
+				if(ultraGoToRecursive(ultra, callback)){break;}
+				Servo.backward(200);
 			}
 			Servo.stop();
 		}else{
-			Servo.foward(200);
 			while(position < ultra.distance.raw){
-				Servo.antiLifting(200);
-				if(Servo.speed() < 0.5f && Time.timer.millis > 500){
-					if(!(callback is null)){callback();}
-					break;
-				}
-				Log.info(Formatter.parse($"ultra: {ultra.distance.raw}", new string[]{"i","color=#505050", "align=center"}));
+				if(ultraGoToRecursive(ultra, callback)){break;}
+				Servo.foward(200);
 			}
 			Servo.stop();
 		}
-		Log.clear();
 	}
 
 	public static void ultraGoTo(Distance dist, ref Ultrassonic ultra, ActionHandler callback = null){
 		Log.proc();
 		if(dist > ultra.distance){
-			Servo.backward(200);
 			while(dist > ultra.distance){
-				Servo.antiLifting(200);
-				if(Servo.speed() < 0.5f && Time.timer.millis > 500){
-					if(!(callback is null)){callback();}
-					break;
-				}
-				Log.info(Formatter.parse($"ultra: {ultra.distance.raw}", new string[]{"i","color=#505050", "align=center"}));
+				if(ultraGoToRecursive(ultra, callback)){break;}
+				Servo.backward(200);
 			}
 			Servo.stop();
 		}else{
-			Servo.foward(200);
 			while(dist < ultra.distance){
-				Servo.antiLifting(200);
-				if(Servo.speed() < 0.5f && Time.timer.millis > 500){
-					if(!(callback is null)){callback();}
-					break;
-				}
-				Log.info(Formatter.parse($"ultra: {ultra.distance.raw}", new string[]{"i","color=#505050", "align=center"}));
+				if(ultraGoToRecursive(ultra, callback)){break;}
+				Servo.foward(200);
 			}
 			Servo.stop();
 		}

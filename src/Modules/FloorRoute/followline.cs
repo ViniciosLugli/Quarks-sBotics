@@ -26,7 +26,7 @@ public class FollowLine{
 	}
 
 	private bool checkSensor(ref Reflective refsensor_, ActionHandler correctCallback, ActionHandler crossCallback){
-		if(refsensor_.light.raw < 55 && !refsensor_.isColored()){
+		if(refsensor_.light.raw < 55 && !refsensor_.isColored() && !refsensor_.isMat()){
 			correctCallback();
 			Clock timeout = new Clock(Time.current.millis + 176);
 			while(refsensor_.light.raw < 55){
@@ -60,11 +60,11 @@ public class FollowLine{
 	public void alignSensors(bool right = true){
 		if(right){
 			Servo.right();
-			while(!this.s1.hasLine()){}
+			while(!(this.s1.light.raw < 55) || this.s1.isColored() || this.s1.isMat()){}
 			Servo.rotate(-4.5f);
 		}else{
 			Servo.left();
-			while(!this.s2.hasLine()){}
+			while(!(this.s2.light.raw < 55) || this.s2.isColored() || this.s2.isMat()){}
 			Servo.rotate(4.5f);
 		}
 	}

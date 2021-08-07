@@ -27,11 +27,12 @@ public class Green{
 		Log.proc();
 		Servo.encoder(14f);
 		Servo.rotate(ignoreDegrees);
-		Degrees maxRight = new Degrees(Gyroscope.x.raw + maxDegrees);
 		turnCallback();
-		while(!(Gyroscope.x % maxRight)){
+		while(true){
 			if(CrossPath.checkLine(Follower)){ break; }
+			if(Gyroscope.inPoint(true, 3)){ Servo.encoder(-5); break; }
 		}
+		Servo.stop();
 	}
 
 	public static bool verify(FloorRoute.FollowLine Follower){

@@ -29,11 +29,12 @@ import("Modules/RescueRoute/rescueRoute.cs");
 //Instances ---------------------------------------------
 static DegreesRange upRamp = new DegreesRange(330, 355);
 static DegreesRange downRamp = new DegreesRange(5, 30);
+static DegreesRange floor = new DegreesRange(355, 5);
 
 static Reflective s1 = new Reflective(1), s2 = new Reflective(0);
 static Ultrassonic uFrontal = new Ultrassonic(0), uRight = new Ultrassonic(1);
 
-static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, 135);
+static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, 140);
 static FloorRoute.Obstacle mainObstacle = new FloorRoute.Obstacle(ref uFrontal, 26);
 static RescueRoute mainRescue = new RescueRoute(ref s1, ref s2, 180);
 //Instance modules ---------------------------------------------

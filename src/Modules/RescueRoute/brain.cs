@@ -7,9 +7,9 @@ public class RescueBrain{
 	private void findExit(sbyte exitIndex, int maxTime = 1200, ActionHandler callback = null){
 		Log.proc();
 		Time.resetTimer();
-		Servo.foward(200);
 		while(Time.timer.millis < maxTime){
-			Servo.antiLifting(200);
+			Servo.antiLifting();
+			Servo.foward(200);
 			if(uRight.distance.raw > RESCUE_SIZE){
 				rescue.setExit(exitIndex);
 				if(!(callback is null)){
@@ -25,7 +25,9 @@ public class RescueBrain{
 		findExit(1);
 		Time.resetTimer();
 		Servo.ultraGoTo(40, ref uFrontal, () => {
-			this.rescue.setTriangle(3);
+			if(this.rescue.setTriangle(3) && !this.rescue.hasInfos()){
+				this.rescue.setExit(2);
+			}
 		});
 
 		if(this.rescue.exit == 1){
@@ -40,7 +42,9 @@ public class RescueBrain{
 			Servo.backward(200);
 			Time.sleep(500);
 			Servo.stop();
-			this.rescue.setExit(2);
+			if(this.rescue.setExit(2)){
+				this.rescue.setTriangle(1);
+			}
 			if(this.rescue.triangle == 0){
 				Servo.rotate(-90);
 				Servo.alignNextAngle();

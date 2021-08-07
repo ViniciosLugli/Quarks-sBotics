@@ -22,4 +22,6 @@ public static class Time{
 	public static void sleep(Clock clock) => bc.Wait(clock.millis);
 
 	public static void debug() => bc.Wait(123456789);
+
+	public static void skipFrame() => bc.Wait(17);
 };
