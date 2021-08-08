@@ -39,19 +39,23 @@ public class RescueRoute{
 		while(upRamp.isOnRange(Gyroscope.z) && uRight.distance.raw < 42){
 			mainRampFollowLine.proc();
 		}
-		Servo.encoder(4, 200);
-		Servo.encoder(-1, 200);
-		Servo.encoder(3, 200);
-		Servo.encoder(-1, 200);
-		Servo.encoder(3, 200);
-		Servo.encoder(-1, 200);
-		Servo.encoder(3, 200);
-		Servo.encoder(-1, 200);
 		Servo.alignNextAngle();
+		for(byte i = 0; i < 4; i++){
+			Servo.encoder(3, 200);
+			Servo.encoder(-1, 200);
+		}
+		Servo.alignNextAngle();
+		this.brain.defaultEnterDegrees = Gyroscope.x;
 		Servo.ultraGoTo(260, ref uFrontal);
 
 		this.brain.findTriangleArea();
+		Led.on(0, 0, 255);
+		this.brain.goToCenter();
+		Distance[] localVictimInfoRescue;
 		for(;;){
+			localVictimInfoRescue = this.brain.victimsAnnihilator.find();
+			this.brain.victimsAnnihilator.rescue(localVictimInfoRescue[0], localVictimInfoRescue[1]);
+			//this.brain.victimsAnnihilator.checkExit();
 		}
 	}
 }

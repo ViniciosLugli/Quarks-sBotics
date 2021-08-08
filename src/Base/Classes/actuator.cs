@@ -80,6 +80,11 @@ public static class Actuator{
 		angle(0);
 	}
 
+	public static void dropVictim(){
+		position(0);
+		angle(12);
+	}
+
 	public static void NOP(){
 		Log.clear();
 		Log.proc();

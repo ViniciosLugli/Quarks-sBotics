@@ -7,7 +7,7 @@ public static class Log{
 
 	public static void info(object data) => bc.Print(1, Formatter.parse(data.ToString(), new string[]{"align=center"}));
 
-	public static void debug(object data) => bc.Print(2, Formatter.parse(data.ToString(), new string[]{"align=center"}));
+	public static void debug(object data) => bc.Print(2, Formatter.parse(data.ToString(), new string[]{"b", "color=#404040", "align=center"}));
 
 	public static void custom(byte line, object data) => bc.Print((int)line, Formatter.parse(data.ToString(), new string[]{"align=center"}));
 

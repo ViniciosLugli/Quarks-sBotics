@@ -19,16 +19,32 @@ public static class Servo{
 	public static void stop() => bc.Move(0, 0);
 
 	public static void antiLifting(){
-		if(Gyroscope.isLifted()){
+		if((Gyroscope.isLifted() || !Gyroscope.inPoint(true, 6)) && Time.timer.millis > 312){
 			Log.proc();
 			Buzzer.play(sLifting);
 			Servo.stop();
-			while(Gyroscope.isLifted()){
+			int timeout = Time.current.millis + 312;
+			while(Gyroscope.isLifted() && Time.current.millis < timeout){
 				Servo.backward(200);
 			}
 			Time.sleep(128);
 			Servo.stop();
 			Servo.alignNextAngle();
+			Time.resetTimer();
+		}
+	}
+
+	public static void antiLiftingRescue(){
+		if((Gyroscope.isLifted() || !Gyroscope.inDiagonal()) && Time.timer.millis >= 312){
+			Log.proc();
+			Buzzer.play(sLifting);
+			Servo.stop();
+			int timeout = Time.current.millis + 312;
+			while(Gyroscope.isLifted() && Time.current.millis < timeout){
+				Servo.backward(200);
+			}
+			Time.sleep(128);
+			Servo.stop();
 			Time.resetTimer();
 		}
 	}
@@ -52,7 +68,7 @@ public static class Servo{
 	public static void alignNextAngle(){
 		Log.proc();
 		if(Gyroscope.inPoint(true, 2)){return;}
-		Degrees alignLocal = new Degrees(0);;
+		Degrees alignLocal = new Degrees(0);
 		if((Gyroscope.x.raw > 315) || (Gyroscope.x.raw <= 45)){
 			alignLocal = new Degrees(0);
 		}else if((Gyroscope.x.raw > 45) && (Gyroscope.x.raw <= 135)){
@@ -63,7 +79,7 @@ public static class Servo{
 			alignLocal = new Degrees(270);
 		}
 
-		Log.info(Formatter.parse($"Align to {alignLocal.raw}°", new string[]{"i","color=#505050", "align=center"}));
+		Log.info(Formatter.parse($"Align to {alignLocal.raw}°", new string[]{"i","color=#505050"}));
 
 		if((alignLocal.raw == 0) && (Gyroscope.x.raw > 180)){
 			Servo.right();
@@ -83,15 +99,13 @@ public static class Servo{
 
 		Degrees alignLocal = (angle is Degrees) ? (Degrees)angle : new Degrees((float)angle);
 
-		Log.info(Formatter.parse($"Align to {alignLocal.raw}°", new string[]{"i","color=#505050", "align=center"}));
+		Log.info(Formatter.parse($"Align to {alignLocal.raw}°", new string[]{"i","color=#505050"}));
 
-		if((alignLocal.raw == 0) && (Gyroscope.x.raw > 180)){
+		float baseFind = Calc.toBearing(Gyroscope.x - alignLocal);
+
+		if(baseFind >= 180){
 			Servo.right();
-		}else if((alignLocal.raw == 0) && (Gyroscope.x.raw < 180)){
-			Servo.left();
-		}else if(Gyroscope.x < alignLocal){
-			Servo.right();
-		}else if(Gyroscope.x > alignLocal){
+		}else if(baseFind < 180){
 			Servo.left();
 		}
 		while(!(Gyroscope.x % alignLocal)){}
@@ -99,47 +113,48 @@ public static class Servo{
 	}
 
 	private static bool ultraGoToRecursive(Ultrassonic ultra, ActionHandler callback){
-		Log.info(Formatter.parse($"ultra: {ultra.distance.raw}", new string[]{"i","color=#505050", "align=center"}));
+		Log.info(Formatter.parse($"ultra: {ultra.distance.raw}, speed: {Servo.speed()}", new string[]{"i","color=#505050"}));
 		Servo.antiLifting();
 		if(Servo.speed() < 0.5f && Time.timer.millis > 500){
-			if(callback != null){callback();}
+			callback?.Invoke();
 			return true;
 		}
 		return false;
 	}
 
-	public static void ultraGoTo(float position, ref Ultrassonic ultra, ActionHandler callback = null){
+	public static void ultraGoTo(float position, ref Ultrassonic ultra, ActionHandler callback = null, int velocity = 200){
 		Log.proc();
+		Time.resetTimer();
 		if(position > ultra.distance.raw){
 			while(position > ultra.distance.raw){
 				if(ultraGoToRecursive(ultra, callback)){break;}
-				Servo.backward(200);
+				Servo.backward(velocity);
 			}
-			Servo.stop();
 		}else{
 			while(position < ultra.distance.raw){
 				if(ultraGoToRecursive(ultra, callback)){break;}
-				Servo.foward(200);
+				Servo.foward(velocity);
 			}
-			Servo.stop();
 		}
+		Servo.stop();
+		Log.clear();
 	}
 
-	public static void ultraGoTo(Distance dist, ref Ultrassonic ultra, ActionHandler callback = null){
+	public static void ultraGoTo(Distance dist, ref Ultrassonic ultra, ActionHandler callback = null, int velocity = 200){
 		Log.proc();
+		Time.resetTimer();
 		if(dist > ultra.distance){
 			while(dist > ultra.distance){
 				if(ultraGoToRecursive(ultra, callback)){break;}
-				Servo.backward(200);
+				Servo.backward(velocity);
 			}
-			Servo.stop();
 		}else{
 			while(dist < ultra.distance){
 				if(ultraGoToRecursive(ultra, callback)){break;}
-				Servo.foward(200);
+				Servo.foward(velocity);
 			}
-			Servo.stop();
 		}
+		Servo.stop();
 		Log.clear();
 	}
 }

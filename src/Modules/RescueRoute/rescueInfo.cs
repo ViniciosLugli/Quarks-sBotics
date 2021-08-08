@@ -2,6 +2,17 @@ public struct RescueInfo{
 	public sbyte triangle;
 	public sbyte exit;
 
+	public int triangleBaseDegrees(){
+		if(this.triangle == 1){
+			return 135;
+		}else if(this.triangle == 2){
+			return 45;
+		}else if(this.triangle == 3){
+			return -45;
+		}
+		return 0;
+	}
+
 	public bool setTriangle(sbyte triangle_){
 		if(this.triangle != 0){return false;}
 		Buzzer.play(sRescueFindArea);

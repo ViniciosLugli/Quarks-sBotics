@@ -5,9 +5,9 @@ public struct Distance{
 
 	public float raw;
 
-	public float toRotations() => this.raw / 2;
+	public int toRotations() => (int)(this.raw / 2);
 
-	public float fromCenter() => this.raw - (Robot.ksize / 2);
+	public float fromCenter() => this.raw - Robot.kDiffFrontalDistance;
 
 	//Basic operators
 	public static bool operator >(Distance a, Distance b) => a.raw > b.raw;
