@@ -70,7 +70,7 @@ public static class Robot{
 	public const byte kRefreshRate = 63;//ms of refresh rate in color/light sensor
 	public const byte kSize = 56;
 	public const byte kDiffFrontalDistance = 20;
-	public const float kErrorDelta = 0.70f;
+	public const float kErrorDelta = 0.60f;
 	//
 
 	public static void throwError(object message) => bc.RobotError(message.ToString());
@@ -570,7 +570,7 @@ public static class Servo{
 			Log.proc();
 			Buzzer.play(sLifting);
 			Servo.stop();
-			int timeout = Time.current.millis + 312;
+			int timeout = Time.current.millis + 378;
 			while(Gyroscope.isLifted() && Time.current.millis < timeout){
 				Servo.backward(200);
 			}
@@ -1229,21 +1229,23 @@ public class RescueRoute{
 			private byte verifyCounter = 0;
 			private List<float> verifyOccurrences = new List<float>();
 			private Degrees lastPoint;
+			private byte totalRotates = 0;
+			private bool canCompleteRotate = true;
 	
-			public VictimsAnnihilator(RescueRoute.RescueBrain tBrainInstance, float defaultDist = 130f, float defaultCounter = 3.2f){
+			public VictimsAnnihilator(RescueRoute.RescueBrain tBrainInstance, float defaultDist = 130f, float defaultCounter = 3.4f){
 				this.distThreshold = new Distance(defaultDist);
 				this.counterThreshold = defaultCounter;
 				this.tBrain = tBrainInstance;
 			}
 	
-			private bool checkDiagonal(){
+			private bool checkDiagonal(int angle = 25){
 				float localDegrees = Calc.toBearing(Gyroscope.x.raw + 90 - this.tBrain.defaultEnterDegrees.raw);
 				if(this.tBrain.rescue.triangle == 1){
-					return localDegrees > (135 - 24) && localDegrees < (135 + 24);
+					return localDegrees > (135 - angle) && localDegrees < (135 + angle);
 				}else if(this.tBrain.rescue.triangle == 2){
-					return localDegrees > (45 - 24) && localDegrees < (45 + 24);
+					return localDegrees > (45 - angle) && localDegrees < (45 + angle);
 				}else if(this.tBrain.rescue.triangle == 3){
-					return localDegrees > (315 - 24) && localDegrees < (315 + 24);
+					return localDegrees > (315 - angle) && localDegrees < (315 + angle);
 				}
 				return false;
 			}
@@ -1260,7 +1262,7 @@ public class RescueRoute{
 							float first = this.verifyOccurrences[1];
 							float last = this.verifyOccurrences[occurrences.Length - 1];
 	
-							if(Math.Abs(first - last) <= 8){
+							if(Math.Abs(first - last) <= 3){
 								Log.debug($"Math.Abs(first - last): {Math.Abs(first - last)}");
 								return true;
 							}
@@ -1279,8 +1281,63 @@ public class RescueRoute{
 				this.verifyOccurrences.Clear();
 			}
 	
+			private void exitMain(){
+				while(true){
+					if((s1.rgb.g > (s1.rgb.r + 5)) && (s1.rgb.g > (s1.rgb.b + 5))){
+						Servo.foward(150);
+						while((s1.rgb.g > (s1.rgb.r + 5)) && (s1.rgb.g > (s1.rgb.b + 5))){}
+						Servo.stop();
+						Servo.encoder(2);
+						while(true){
+							if( (s1.isMat() && s1.isColored() && s1.rgb.b < 24 && s1.rgb.g < 24) ||
+								(s2.isMat() && s2.isColored() && s2.rgb.b < 24 && s2.rgb.g < 24)){
+								Servo.stop();
+								Servo.encoder(2);
+								if( (s1.isMat() && s1.isColored() && s1.rgb.b < 24 && s1.rgb.g < 24) ||
+									(s2.isMat() && s2.isColored() && s2.rgb.b < 24 && s2.rgb.g < 24)){
+									Servo.stop();
+									Servo.encoder(7);
+									Log.clear();
+									Led.on(255, 0, 0);
+									Log.debug("AEEEEEEEEEEEEEEEEEEE PORRA");
+									Time.debug();
+								}
+								Servo.encoder(-2);
+							}
+							mainFollow.proc();
+							mainObstacle.verify();
+						}
+					}
+				}
+			}
+	
+			private void exitGoGoGo(){
+				Servo.alignToAngle(this.tBrain.defaultEnterDegrees);
+				if(this.tBrain.rescue.exit == 3){
+					Servo.ultraGoTo(43, ref uFrontal, null, 300);
+					Servo.nextAngleLeft(30);
+					Servo.foward(200);
+					this.exitMain();
+				}else if(this.tBrain.rescue.exit == 2){
+					Servo.ultraGoTo(43, ref uFrontal, null, 300);
+					Servo.nextAngleRight(30);
+					Servo.ultraGoTo(43, ref uFrontal, null, 300);
+					Servo.nextAngleLeft(30);
+					Servo.foward(200);
+					this.exitMain();
+				}else if(this.tBrain.rescue.exit == 1){
+					Servo.rotate(180);
+					Servo.alignNextAngle();
+					Servo.ultraGoTo(43, ref uFrontal, null, 300);
+					Servo.nextAngleLeft(30);
+					Servo.foward(200);
+					this.exitMain();
+				}
+			}
+	
 			public Distance[] find(){
 				Distance localDistance = uFrontal.distance;
+				Distance localDistThreshold = this.distThreshold;
 				byte serial = 255;
 				this.resetInstances();
 				while(true){
@@ -1292,11 +1349,38 @@ public class RescueRoute{
 					Log.info(Formatter.parse($"FINDING VICTIM", new string[]{"i","color=#78DCE8"}));
 					Log.debug(Formatter.parse($"uRight: {localDistance.raw}, verifyCounter: {this.verifyCounter}, serial: {serial}", new string[]{"i","color=#505050"}));
 	
-					if(localDistance < this.distThreshold){
+					if(this.checkDiagonal(8 - this.totalRotates) && this.canCompleteRotate){
+						this.canCompleteRotate = false;
+						this.totalRotates++;
+						Buzzer.play(sMultiplesCross);
+					}else if(!this.checkDiagonal(16)){
+						this.canCompleteRotate = true;
+					}
+	
+					if(totalRotates == 3){
+						Servo.stop();
+						Log.debug("TO DANDO O FORA DAQUI FODASE");
+						this.exitGoGoGo();
+					}
+	
+	
+					if(Gyroscope.inPoint(true, 5)){
+						localDistThreshold = new Distance(this.distThreshold.raw * 0.95f);
+					}else if(this.checkDiagonal(12)){
+						localDistThreshold = new Distance(this.distThreshold.raw * 0.940f);
+					}else if(this.checkDiagonal()){
+						localDistThreshold = new Distance(this.distThreshold.raw * 0.95f);
+					}else if(Gyroscope.inDiagonal(true, 10)){
+						localDistThreshold = new Distance(this.distThreshold.raw * 1.20f);
+					}else{
+						localDistThreshold = this.distThreshold;
+					}
+	
+					if((localDistance <= localDistThreshold)){
 						this.verifyCounter++;
 						this.verifyOccurrences.Add(localDistance.raw);
 						if(this.checkVerifyP(localDistance, serial)){
-							this.lastPoint = new Degrees(Gyroscope.x.raw + 5);
+							this.lastPoint = new Degrees(Gyroscope.x.raw + 6);
 							Led.on(0, 255, 0);
 							this.resetInstances();
 							break;
@@ -1306,16 +1390,17 @@ public class RescueRoute{
 						Led.on(255, 0, 0);
 					}
 	
-					if(Gyroscope.inPoint(true, 2) && Time.timer.millis > 328){
-						Servo.ultraGoTo((300 / 2) - ((Robot.kDiffFrontalDistance * Robot.kErrorDelta) / 3), ref uFrontal, null, 300);
-						Time.resetTimer();
-					}
+					//if(Gyroscope.inPoint(true, 2) && Time.timer.millis > 328){
+					//	Servo.ultraGoTo((300 / 2) - ((Robot.kDiffFrontalDistance * Robot.kErrorDelta) / 3), ref uFrontal, null, 300);
+					//	Time.resetTimer();
+					//}
 	
 					Time.sleep(16);
 				}
 				Servo.stop();
 				Log.clear();
 				Log.info(Formatter.parse($"FINDED VICTIM", new string[]{"i","color=#A9DC76"}));
+				Log.debug(Formatter.parse($"uRight: {localDistance.raw}, verifyCounter: {this.verifyCounter}, serial: {serial}", new string[]{"i","color=#505050"}));
 				Buzzer.play(sTurnGreen);
 				return new Distance[]{new Distance(this.distThreshold - localDistance), localDistance};
 			}
@@ -1338,6 +1423,7 @@ public class RescueRoute{
 				int cRotations = (int)(realDist.toRotations() * 0.95f);
 				int lastRotations = 0;
 				Time.resetTimer();
+				Distance saveDist = uFrontal.distance;
 				for (int rotation = 0; rotation < cRotations; rotation++){
 					Log.info(Formatter.parse($"cRotations: {cRotations}, currentFor: {rotation}", new string[]{"i","color=#A9DC76"}));
 					Servo.foward(150);
@@ -1345,8 +1431,8 @@ public class RescueRoute{
 					lastRotations = rotation;
 					if(Actuator.victim){
 						break;
-					}else if(Servo.speed() < 1f && Time.timer.millis >= 192){
-						lastRotations = lastRotations - 4;
+					}else if(Servo.speed() < 0.5f && Time.timer.millis > 192){
+						break;
 					}
 				}
 				Time.sleep(128);
@@ -1357,15 +1443,18 @@ public class RescueRoute{
 				Servo.stop();
 				Log.proc();
 				Log.debug(Formatter.parse($"Actuator.victim: {Actuator.victim}", new string[]{"i","color=#FFEA79"}));
+				Servo.backward(300);
+				Time.resetTimer();
+				while((saveDist.raw <= 300 && uFrontal.distance < saveDist) ||
+					  (saveDist.raw > 300 && Time.timer.millis < ((int)(((lastRotations * 48) + timeToReturn + 192) * 0.6f)))){}
+				//Time.sleep((int)(((lastRotations * 48) + timeToReturn + 192) * 0.55f));
+				Servo.stop();
 				if(!Actuator.victim){
 					Servo.nextAngleRight();
 					this.tBrain.goToCenter();
 					Servo.alignToAngle(this.lastPoint);
 					return false;
 				}
-				Servo.backward(300);
-				Time.sleep((int)(((lastRotations * 48) + timeToReturn + 192) * 0.60f));
-				Servo.stop();
 				return true;
 			}
 	
@@ -1378,7 +1467,7 @@ public class RescueRoute{
 				Servo.foward(200);
 				Time.sleep(192);
 				Time.resetTimer();
-				while(Servo.speed() > 0.5f || Time.timer.millis <= 312){
+				while(Servo.speed() > 0.2f || Time.timer.millis <= 512){
 					Log.debug(Formatter.parse($"speed: {Servo.speed()}, timer: {Time.timer.millis}", new string[]{"i","color=#FFEA79"}));
 					Servo.antiLiftingRescue();
 				}
@@ -1392,9 +1481,18 @@ public class RescueRoute{
 					Servo.foward();
 					Time.sleep(128);
 				}
-					Servo.stop();
+				if(Actuator.victim){
+					for (int i = 0; i < 2; i++){
+						Servo.backward();
+						Time.sleep(128);
+						Servo.foward();
+						Time.sleep(128);
+					}
+				}
+				Servo.stop();
 				Actuator.close();
 				Actuator.alignUp();
+				Servo.encoder(-60);
 				Servo.nextAngleRight();
 				this.tBrain.goToCenter();
 				Servo.alignToAngle(this.lastPoint);

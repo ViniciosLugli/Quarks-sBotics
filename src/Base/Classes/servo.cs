@@ -23,7 +23,7 @@ public static class Servo{
 			Log.proc();
 			Buzzer.play(sLifting);
 			Servo.stop();
-			int timeout = Time.current.millis + 312;
+			int timeout = Time.current.millis + 378;
 			while(Gyroscope.isLifted() && Time.current.millis < timeout){
 				Servo.backward(200);
 			}
