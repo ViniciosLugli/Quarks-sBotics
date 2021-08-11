@@ -1,4 +1,4 @@
-public static class Robot{
+public static class Robot {
 	//Private robot info. current robo-3:
 	public const byte kLights = 5;//number of sensors
 	public const byte kUltrassonics = 3;//number of sensors

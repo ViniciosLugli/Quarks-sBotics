@@ -1,6 +1,6 @@
-public static class RescueAnalyzer{
+public static class RescueAnalyzer {
 
-	public static void setup(){
+	public static void setup() {
 		bc.EraseConsoleFile();
 		bc.SetFileConsolePath("/home/vinicioslugli/Documentos/scripts/python/sBotics-viewer/res/out.txt");
 	}

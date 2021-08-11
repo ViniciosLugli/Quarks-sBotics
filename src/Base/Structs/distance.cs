@@ -1,5 +1,5 @@
-public struct Distance{
-	public Distance(float raw_){
+public struct Distance {
+	public Distance(float raw_) {
 		this.raw = raw_;
 	}
 

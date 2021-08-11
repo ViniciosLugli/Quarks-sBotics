@@ -1,16 +1,16 @@
-public struct Clock{
-	public Clock(int millis_){
+public struct Clock {
+	public Clock(int millis_) {
 		this.millis = millis_;
 	}
 
 	public int sec {
-		get => (int)(this.millis/1000);
+		get => (int)(this.millis / 1000);
 	}
 
 	public int millis;
 
 	public uint micros {
-		get => (uint)(this.millis*1000);
+		get => (uint)(this.millis * 1000);
 	}
 
 	//Basic operators

@@ -1,5 +1,5 @@
-public struct Action{
-	public Action(bool raw_){
+public struct Action {
+	public Action(bool raw_) {
 		this.raw = raw_;
 	}
 

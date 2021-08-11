@@ -41,13 +41,13 @@ static RescueRoute mainRescue = new RescueRoute(ref s1, ref s2, 180);
 
 
 //Setup program
-void setup(){
+void setup() {
 	Actuator.alignUp();
 	Time.resetTimer();
 }
 
 //Main loop
-void loop(){
+void loop() {
 	mainFollow.proc();
 	mainObstacle.verify();
 	mainRescue.verify();
@@ -68,11 +68,11 @@ void loop(){
 		}
 	}
 #else //DEFAULT MAIN
-	void Main(){
-		setup();
-		mainRescue.check();
-		for(;;){
-			loop();
-		}
+void Main() {
+	setup();
+	mainRescue.check();
+	for (; ; ) {
+		loop();
 	}
+}
 #endif

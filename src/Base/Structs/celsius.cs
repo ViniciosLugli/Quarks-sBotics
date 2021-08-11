@@ -1,5 +1,5 @@
-public struct Celsius{
-	public Celsius(float raw_){
+public struct Celsius {
+	public Celsius(float raw_) {
 		this.raw = raw_;
 	}
 
