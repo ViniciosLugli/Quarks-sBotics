@@ -1,8 +1,8 @@
 public static class RescueAnalyzer {
 
 	public static void setup() {
-		bc.EraseConsoleFile();
 		bc.SetFileConsolePath("/home/vinicioslugli/Documentos/scripts/python/sBotics-viewer/res/out.txt");
+		bc.EraseConsoleFile();
 	}
 
 	public static void exportVictim(AliveVictim victim) => bc.WriteText($"[ALIVEVICTIM]({victim.infos()})");

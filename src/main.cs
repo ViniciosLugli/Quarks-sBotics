@@ -21,6 +21,7 @@ import("Base/Attributes/debug.cs");
 
 
 //Modules for competition challenges
+import("Modules/AI/ai.cs");
 import("Modules/FloorRoute/floorRoute.cs");
 import("Modules/RescueRoute/rescueRoute.cs");
 
@@ -55,19 +56,21 @@ void loop() {
 
 //----------------------------- Main ---------------------------------------//
 
-#if (false) //DEBUG MODE MAIN
-	void Main(){
-	//long a = Time.current.millis;
-	//float abuble = bc.Lightness(1);
-	//while (abuble == bc.Lightness(1)) {
-	//	Servo.left();
+#if (true) //DEBUG MODE MAIN
+
+void Main() {
+	AI.Analyzer.setup();
+	AI.Controller.train(
+		new double[,] { { 0, 0, -1 }, { 1, 1, 1 }, { 1, 0, 1 }, { 0, 1, 1 } },
+		new double[,] { { 0, 1, 1, 0 } },
+		new double[,] { { 0, 0, 1 } }
+		);
+	//for (; ; ) {
 	//}
-	//bc.Print(Time.current.millis - a);
-	//Servo.stop();
-	for (;;){
-		}
-	}
+}
+
 #else //DEFAULT MAIN
+
 void Main() {
 	setup();
 	mainRescue.check();
@@ -75,4 +78,5 @@ void Main() {
 		loop();
 	}
 }
+
 #endif

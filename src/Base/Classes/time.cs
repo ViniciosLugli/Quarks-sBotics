@@ -24,4 +24,8 @@ public static class Time {
 	public static void debug() => bc.Wait(123456789);
 
 	public static void skipFrame() => bc.Wait(17);
+
+	public static string date {
+		get => string.Format("{0:HH:mm:ss.fff}", DateTime.Now);
+	}
 };

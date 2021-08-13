@@ -34,6 +34,8 @@ class Calc {
 		return (hexStr.Length < 2) ? ("0" + hexStr) : hexStr;
 	}
 	public static float toBearing(float degrees) => (degrees + 360) % 360;
+
+	public static string repeatString(string value, int count) => new System.Text.StringBuilder(value.Length * count).Insert(0, value, count).ToString();
 }
 public static class Formatter {
 	public static string parse(string data, string[] offsets) {
@@ -82,8 +84,8 @@ public struct Clock {
 		this.millis = millis_;
 	}
 
-	public int sec {
-		get => (int)(this.millis / 1000);
+	public float sec {
+		get => (float)(this.millis / 1000);
 	}
 
 	public int millis;
@@ -128,6 +130,10 @@ public static class Time {
 	public static void debug() => bc.Wait(123456789);
 
 	public static void skipFrame() => bc.Wait(17);
+
+	public static string date {
+		get => string.Format("{0:HH:mm:ss.fff}", DateTime.Now);
+	}
 };
 public struct Action {
 	public Action(bool raw_) {
@@ -731,6 +737,283 @@ public struct Vector2 {
 
 
 //Modules for competition challenges
+public class AI {
+	public static class Analyzer {
+	
+		public static void setup() {
+			bc.EraseConsoleFile();
+			bc.SetFileConsolePath("/home/vinicioslugli/Documentos/scripts/sbotics/Codes/Quarks-sBotics/releases/AI.log");
+		}
+	
+		public static void log(object info) => bc.WriteText(info.ToString());
+	
+		public static void logLine(object info) {
+			var len = info.ToString().Length;
+			bc.WriteText($"{(Calc.repeatString("-", (50 - (len / 2)) - 1))} {info.ToString()} {(Calc.repeatString("-", (50 - (len / 2)) - 1))}");
+		}
+	
+		public static void logLine() => bc.WriteText(Calc.repeatString("-", 101));
+	
+		public static void clear() => bc.EraseConsoleFile();
+	}
+	
+	public static class ResultHandler {
+	
+		public static void setup() {
+			bc.EraseConsoleFile();
+			bc.SetFileConsolePath("/home/vinicioslugli/Documentos/scripts/sbotics/Codes/Quarks-sBotics/releases/AI.result");
+		}
+	
+		public static void export(object info) => bc.WriteText($"[{Time.date}] {info.ToString()}");
+	
+		public static void clear() => bc.EraseConsoleFile();
+	}
+	public class Neural {
+		public class NeuralNetWork {
+			private Random _radomObj;
+	
+			public NeuralNetWork(int synapseMatrixColumns, int synapseMatrixLines) {
+				SynapseMatrixColumns = synapseMatrixColumns;
+				SynapseMatrixLines = synapseMatrixLines;
+	
+				_Init();
+			}
+	
+			public NeuralNetWork(int synapseMatrixColumns, int synapseMatrixLines, double[,] synapsesMatrixGived) {
+				SynapseMatrixColumns = synapseMatrixColumns;
+				SynapseMatrixLines = synapseMatrixLines;
+				SynapsesMatrix = synapsesMatrixGived;
+			}
+	
+			public int SynapseMatrixColumns { get; }
+			public int SynapseMatrixLines { get; }
+			public double[,] SynapsesMatrix { get; private set; }
+	
+			private void _Init() {
+				// make sure that for every instance of the neural network we are geting the same radom values
+				_radomObj = new Random(1);
+				_generateSynapsesMatrix();
+			}
+	
+			private void _generateSynapsesMatrix() {
+				SynapsesMatrix = new double[SynapseMatrixLines, SynapseMatrixColumns];
+	
+				for (var i = 0; i < SynapseMatrixLines; i++) {
+					for (var j = 0; j < SynapseMatrixColumns; j++) {
+						SynapsesMatrix[i, j] = (2 * _radomObj.NextDouble()) - 1;
+					}
+				}
+			}
+	
+			private double[,] _calculateSigmoid(double[,] matrix) {
+	
+				int rowLength = matrix.GetLength(0);
+				int colLength = matrix.GetLength(1);
+	
+				for (int i = 0; i < rowLength; i++) {
+					for (int j = 0; j < colLength; j++) {
+						var value = matrix[i, j];
+						matrix[i, j] = 1 / (1 + Math.Exp(value * -1));
+					}
+				}
+				return matrix;
+			}
+	
+			private double[,] _calculateSigmoidDerivative(double[,] matrix) {
+				int rowLength = matrix.GetLength(0);
+				int colLength = matrix.GetLength(1);
+	
+				for (int i = 0; i < rowLength; i++) {
+					for (int j = 0; j < colLength; j++) {
+						var value = matrix[i, j];
+						matrix[i, j] = value * (1 - value);
+					}
+				}
+				return matrix;
+			}
+	
+	
+			public double[,] think(double[,] inputMatrix) {
+				var productOfTheInputsAndWeights = matrixDotProduct(inputMatrix, SynapsesMatrix);
+				return _calculateSigmoid(productOfTheInputsAndWeights);
+			}
+	
+			public double[,] think(double[,] inputMatrix, double[,] SynapsesMatrixGived) {
+				var productOfTheInputsAndWeights = matrixDotProduct(inputMatrix, SynapsesMatrixGived);
+				return _calculateSigmoid(productOfTheInputsAndWeights);
+			}
+	
+			public void train(double[,] trainInputMatrix, double[,] trainOutputMatrix, int interactions) {
+				// we run all the interactions
+				for (var i = 0; i < interactions; i++) {
+					// calculate the output
+					var output = think(trainInputMatrix);
+	
+					// calculate the error
+					var error = matrixSubstract(trainOutputMatrix, output);
+					var curSigmoidDerivative = _calculateSigmoidDerivative(output);
+					var error_SigmoidDerivative = matrixProduct(error, curSigmoidDerivative);
+	
+					// calculate the adjustment
+					var adjustment = matrixDotProduct(MatrixTranspose(trainInputMatrix), error_SigmoidDerivative);
+	
+					SynapsesMatrix = matrixSum(SynapsesMatrix, adjustment);
+				}
+			}
+	
+			public static double[,] MatrixTranspose(double[,] matrix) {
+				int w = matrix.GetLength(0);
+				int h = matrix.GetLength(1);
+	
+				double[,] result = new double[h, w];
+	
+				for (int i = 0; i < w; i++) {
+					for (int j = 0; j < h; j++) {
+						result[j, i] = matrix[i, j];
+					}
+				}
+	
+				return result;
+			}
+	
+			public static double[,] matrixSum(double[,] matrixa, double[,] matrixb) {
+				var rowsA = matrixa.GetLength(0);
+				var colsA = matrixa.GetLength(1);
+	
+				var result = new double[rowsA, colsA];
+	
+				for (int i = 0; i < rowsA; i++) {
+					for (int u = 0; u < colsA; u++) {
+						result[i, u] = matrixa[i, u] + matrixb[i, u];
+					}
+				}
+	
+				return result;
+			}
+	
+			public static double[,] matrixSubstract(double[,] matrixa, double[,] matrixb) {
+				var rowsA = matrixa.GetLength(0);
+				var colsA = matrixa.GetLength(1);
+	
+				var result = new double[rowsA, colsA];
+	
+				for (int i = 0; i < rowsA; i++) {
+					for (int u = 0; u < colsA; u++) {
+						result[i, u] = matrixa[i, u] - matrixb[i, u];
+					}
+				}
+	
+				return result;
+			}
+	
+			public static double[,] matrixProduct(double[,] matrixa, double[,] matrixb) {
+				var rowsA = matrixa.GetLength(0);
+				var colsA = matrixa.GetLength(1);
+	
+				var result = new double[rowsA, colsA];
+	
+				for (int i = 0; i < rowsA; i++) {
+					for (int u = 0; u < colsA; u++) {
+						result[i, u] = matrixa[i, u] * matrixb[i, u];
+					}
+				}
+	
+				return result;
+			}
+	
+			public static double[,] matrixDotProduct(double[,] matrixa, double[,] matrixb) {
+	
+				var rowsA = matrixa.GetLength(0);
+				var colsA = matrixa.GetLength(1);
+	
+				var rowsB = matrixb.GetLength(0);
+				var colsB = matrixb.GetLength(1);
+	
+				if (colsA != rowsB)
+					throw new Exception("Matrices dimensions don't fit.");
+	
+				var result = new double[rowsA, colsB];
+	
+				for (int i = 0; i < rowsA; i++) {
+					for (int j = 0; j < colsB; j++) {
+						for (int k = 0; k < rowsB; k++)
+							result[i, j] += matrixa[i, k] * matrixb[k, j];
+					}
+				}
+				return result;
+			}
+	
+		}
+	}
+	
+	public class Controller {
+		static void logMatrix(double[,] matrix) {
+			int rowLength = matrix.GetLength(0);
+			int colLength = matrix.GetLength(1);
+	
+			for (int i = 0; i < rowLength; i++) {
+				for (int j = 0; j < colLength; j++) {
+					Analyzer.log($"[{i}, {j}] = {matrix[i, j]}");
+				}
+			}
+			Analyzer.log("");
+		}
+	
+		static string ToMatrixString(double[,] matrix) {
+			var s = new System.Text.StringBuilder();
+	
+			for (var i = 0; i < matrix.GetLength(0); i++) {
+				s.Append("[");
+				for (var j = 0; j < matrix.GetLength(1); j++) {
+					s.Append(matrix[i, j]).Append(",");
+				}
+				s.Remove(s.Length - 1, 1);
+				s.Append("]");
+			}
+	
+			return s.ToString();
+		}
+	
+		public static void train(double[,] trainingInputs, double[,] trainingOutputs, double[,] thinkOutput, int interactions = 128000) {
+			var curNeuralNetwork = new AI.Neural.NeuralNetWork(1, trainingInputs.GetLength(1));
+	
+			Analyzer.logLine("INFOS");
+			Analyzer.log($"trainingInputs: [{ToMatrixString(trainingInputs)}]");
+			Analyzer.log($"trainingOutputs: [{ToMatrixString(trainingOutputs)}]");
+			Analyzer.log($"thinkOutput: [{ToMatrixString(thinkOutput)}]");
+			Analyzer.log($"interactions: {interactions}lps");
+			Analyzer.logLine();
+			Analyzer.log("");
+	
+			Analyzer.logLine("TRAIN WORK");
+			Analyzer.log($"[{Time.date}] Random synaptic weights before training:");
+			Controller.logMatrix(curNeuralNetwork.SynapsesMatrix);
+	
+			curNeuralNetwork.train(trainingInputs, AI.Neural.NeuralNetWork.MatrixTranspose(trainingOutputs), interactions);
+	
+			Analyzer.log($"[{Time.date}] Result synaptic weights after training:");
+			Controller.logMatrix(curNeuralNetwork.SynapsesMatrix);
+	
+			Log.debug($"Train finished in {Time.current.millis}ms");
+			Analyzer.log($"[{Time.date}] Train finished in {Time.current.millis}ms");
+			Analyzer.logLine();
+			Analyzer.log("");
+	
+			Analyzer.logLine("THINK PROCESS");
+			// testing neural networks against a new problem
+			Analyzer.log($"[{Time.date}] result of problems => [{ToMatrixString(thinkOutput)}]:");
+	
+			Time.resetTimer();
+	
+			Controller.logMatrix(curNeuralNetwork.think(thinkOutput));
+	
+			Analyzer.log($"[{Time.date}] Think finished in {Time.current.millis}ms");
+			Log.debug($"Think finished in {Time.current.millis}ms");
+			Analyzer.logLine();
+			Time.skipFrame();
+		}
+	}
+}
 public static class FloorRoute {
 	public class FollowLine {
 		public FollowLine(ref Reflective refs1_, ref Reflective refs2_, int velocity_) {
@@ -1584,19 +1867,21 @@ void loop() {
 
 //----------------------------- Main ---------------------------------------//
 
-#if (false) //DEBUG MODE MAIN
-	void Main(){
-	//long a = Time.current.millis;
-	//float abuble = bc.Lightness(1);
-	//while (abuble == bc.Lightness(1)) {
-	//	Servo.left();
+#if (true) //DEBUG MODE MAIN
+
+void Main() {
+	AI.Analyzer.setup();
+	AI.Controller.train(
+		new double[,] { { 0, 0, -1 }, { 1, 1, 1 }, { 1, 0, 1 }, { 0, 1, 1 } },
+		new double[,] { { 0, 1, 1, 0 } },
+		new double[,] { { 0, 0, 1 } }
+		);
+	//for (; ; ) {
 	//}
-	//bc.Print(Time.current.millis - a);
-	//Servo.stop();
-	for (;;){
-		}
-	}
+}
+
 #else //DEFAULT MAIN
+
 void Main() {
 	setup();
 	mainRescue.check();
@@ -1604,4 +1889,5 @@ void Main() {
 		loop();
 	}
 }
+
 #endif

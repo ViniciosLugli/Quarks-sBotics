@@ -3,8 +3,8 @@ public struct Clock {
 		this.millis = millis_;
 	}
 
-	public int sec {
-		get => (int)(this.millis / 1000);
+	public float sec {
+		get => (float)(this.millis / 1000);
 	}
 
 	public int millis;
