@@ -741,32 +741,46 @@ public class AI {
 	public static class Analyzer {
 	
 		public static void setup() {
+			Analyzer.setOrigin();
 			bc.EraseConsoleFile();
-			bc.SetFileConsolePath("/home/vinicioslugli/Documentos/scripts/sbotics/Codes/Quarks-sBotics/releases/AI.log");
 		}
 	
-		public static void log(object info) => bc.WriteText(info.ToString());
+		public static void setOrigin() => bc.SetFileConsolePath("/home/vinicioslugli/Documentos/scripts/sbotics/Codes/Quarks-sBotics/releases/AI.log");
+	
+		public static void log(object info) {
+			Analyzer.setOrigin();
+			bc.WriteText(info.ToString());
+		}
 	
 		public static void logLine(object info) {
+			Analyzer.setOrigin();
 			var len = info.ToString().Length;
 			bc.WriteText($"{(Calc.repeatString("-", (50 - (len / 2)) - 1))} {info.ToString()} {(Calc.repeatString("-", (50 - (len / 2)) - 1))}");
 		}
 	
-		public static void logLine() => bc.WriteText(Calc.repeatString("-", 101));
-	
-		public static void clear() => bc.EraseConsoleFile();
-	}
-	
-	public static class ResultHandler {
-	
-		public static void setup() {
-			bc.EraseConsoleFile();
-			bc.SetFileConsolePath("/home/vinicioslugli/Documentos/scripts/sbotics/Codes/Quarks-sBotics/releases/AI.result");
+		public static void logLine() {
+			Analyzer.setOrigin();
+			bc.WriteText(Calc.repeatString("-", 101));
 		}
 	
-		public static void export(object info) => bc.WriteText($"[{Time.date}] {info.ToString()}");
+		public static void clear() {
+			Analyzer.setOrigin();
+			bc.EraseConsoleFile();
+		}
+	}
 	
-		public static void clear() => bc.EraseConsoleFile();
+	public static class Result {
+		public static void setOrigin(string filename) => bc.SetFileConsolePath($"/home/vinicioslugli/Documentos/scripts/sbotics/Codes/Quarks-sBotics/src/Variables/{filename}");
+	
+		public static void export(object info, string filename) {
+			Result.setOrigin(filename);
+			bc.WriteText($"[{Time.date}] {info.ToString()}");
+		}
+	
+		public static void clear(string filename) {
+			Result.setOrigin(filename);
+			bc.EraseConsoleFile();
+		}
 	}
 	public class Neural {
 		public class NeuralNetWork {
@@ -1383,8 +1397,8 @@ public class RescueRoute {
 	public static class RescueAnalyzer {
 	
 		public static void setup() {
-			bc.EraseConsoleFile();
 			bc.SetFileConsolePath("/home/vinicioslugli/Documentos/scripts/python/sBotics-viewer/res/out.txt");
+			bc.EraseConsoleFile();
 		}
 	
 		public static void exportVictim(AliveVictim victim) => bc.WriteText($"[ALIVEVICTIM]({victim.infos()})");
