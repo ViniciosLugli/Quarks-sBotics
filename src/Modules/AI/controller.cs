@@ -1,5 +1,5 @@
 
-public class Controller {
+public static class Controller {
 	static void logMatrix(double[,] matrix) {
 		int rowLength = matrix.GetLength(0);
 		int colLength = matrix.GetLength(1);
@@ -12,16 +12,16 @@ public class Controller {
 		Analyzer.log("");
 	}
 
-	static string ToMatrixString(double[,] matrix) {
+	public static string ToMatrixString(double[,] matrix) {
 		var s = new System.Text.StringBuilder();
 
 		for (var i = 0; i < matrix.GetLength(0); i++) {
-			s.Append("[");
+			s.Append("{");
 			for (var j = 0; j < matrix.GetLength(1); j++) {
-				s.Append(matrix[i, j]).Append(",");
+				s.Append(matrix[i, j]).Append(", ");
 			}
-			s.Remove(s.Length - 1, 1);
-			s.Append("]");
+			s.Remove(s.Length - 2, 2);
+			s.Append("}");
 		}
 
 		return s.ToString();
@@ -64,5 +64,9 @@ public class Controller {
 		Log.debug($"Think finished in {Time.current.millis}ms");
 		Analyzer.logLine();
 		Time.skipFrame();
+		while (true) {
+			thinkOutput = new double[,] { { s2.light.raw < 55 ? 1 : 0, s2.isMat() ? 1 : 0 } };
+			Log.info(ToMatrixString(curNeuralNetwork.think(thinkOutput)));
+		}
 	}
 }

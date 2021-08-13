@@ -33,8 +33,8 @@ public static class Result {
 	public static void setOrigin(string filename) => bc.SetFileConsolePath($"/home/vinicioslugli/Documentos/scripts/sbotics/Codes/Quarks-sBotics/src/Variables/{filename}");
 
 	public static void export(object info, string filename) {
-		Result.setOrigin(filename);
-		bc.WriteText($"[{Time.date}] {info.ToString()}");
+		Result.clear(filename);
+		bc.WriteText(info.ToString());
 	}
 
 	public static void clear(string filename) {

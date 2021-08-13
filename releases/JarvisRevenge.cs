@@ -773,8 +773,8 @@ public class AI {
 		public static void setOrigin(string filename) => bc.SetFileConsolePath($"/home/vinicioslugli/Documentos/scripts/sbotics/Codes/Quarks-sBotics/src/Variables/{filename}");
 	
 		public static void export(object info, string filename) {
-			Result.setOrigin(filename);
-			bc.WriteText($"[{Time.date}] {info.ToString()}");
+			Result.clear(filename);
+			bc.WriteText(info.ToString());
 		}
 	
 		public static void clear(string filename) {
@@ -960,7 +960,7 @@ public class AI {
 		}
 	}
 	
-	public class Controller {
+	public static class Controller {
 		static void logMatrix(double[,] matrix) {
 			int rowLength = matrix.GetLength(0);
 			int colLength = matrix.GetLength(1);
@@ -973,16 +973,16 @@ public class AI {
 			Analyzer.log("");
 		}
 	
-		static string ToMatrixString(double[,] matrix) {
+		public static string ToMatrixString(double[,] matrix) {
 			var s = new System.Text.StringBuilder();
 	
 			for (var i = 0; i < matrix.GetLength(0); i++) {
-				s.Append("[");
+				s.Append("{");
 				for (var j = 0; j < matrix.GetLength(1); j++) {
-					s.Append(matrix[i, j]).Append(",");
+					s.Append(matrix[i, j]).Append(", ");
 				}
-				s.Remove(s.Length - 1, 1);
-				s.Append("]");
+				s.Remove(s.Length - 2, 2);
+				s.Append("}");
 			}
 	
 			return s.ToString();
@@ -1025,6 +1025,30 @@ public class AI {
 			Log.debug($"Think finished in {Time.current.millis}ms");
 			Analyzer.logLine();
 			Time.skipFrame();
+			while (true) {
+				thinkOutput = new double[,] { { s2.light.raw < 55 ? 1 : 0, s2.isMat() ? 1 : 0 } };
+				Log.info(ToMatrixString(curNeuralNetwork.think(thinkOutput)));
+			}
+		}
+	}
+	const byte MARGIN_BLACK_VALUE = 53;
+	
+	public struct Data {
+		public double[] input;
+		public double output;
+	
+		public Data(double[] _input, double _output) {
+			this.input = _input;
+			this.output = _output;
+		}
+	}
+	
+	public class Trainner {
+		public static Data reflectives(double defaultOutput) {
+			return new Data(
+				new double[] { s2.light.raw, s2.isMat() ? 1 : 0 },
+				defaultOutput
+			);
 		}
 	}
 }
@@ -1269,7 +1293,7 @@ public static class FloorRoute {
 	}
 	static private class Security {
 		public static void verify(FloorRoute.FollowLine Follower) {
-			if (Time.timer.millis > (2800 - (Follower.velocity * 13)) && mainRescue.rampTimer == 0 && !floor.isOnRange(Gyroscope.z)) {
+			if (Time.timer.millis > (2800 - (Follower.velocity * 10)) && mainRescue.rampTimer == 0 && !floor.isOnRange(Gyroscope.z)) {
 				Security.checkInLine(Follower, () => Security.backToLine(Follower));
 				Time.resetTimer();
 			}
@@ -1298,8 +1322,8 @@ public static class FloorRoute {
 	
 		private static bool findLine(FloorRoute.FollowLine Follower) {
 			Degrees defaultAxis = Gyroscope.x;
-			Degrees max = new Degrees(defaultAxis.raw - 10);
-	
+			Degrees max = new Degrees(defaultAxis.raw - 15);
+			Degrees min = new Degrees(defaultAxis.raw + 15);
 			Func<Degrees, bool> findLineBase = (degrees) => {
 				while (!(Gyroscope.x % degrees)) {
 					if (CrossPath.checkLine(Follower)) {
@@ -1314,9 +1338,8 @@ public static class FloorRoute {
 			if (findLineBase(max)) { return true; }
 			Servo.stop();
 	
-			max = new Degrees(defaultAxis.raw + 20);
 			Servo.right();
-			if (findLineBase(max)) { return true; }
+			if (findLineBase(min)) { return true; }
 			Servo.stop();
 	
 			Servo.left();
@@ -1860,11 +1883,68 @@ static DegreesRange floor = new DegreesRange(355, 5);
 static Reflective s1 = new Reflective(1), s2 = new Reflective(0);
 static Ultrassonic uFrontal = new Ultrassonic(0), uRight = new Ultrassonic(1);
 
-static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, 140);
+static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, 145);
 static FloorRoute.Obstacle mainObstacle = new FloorRoute.Obstacle(ref uFrontal, 26);
 static RescueRoute mainRescue = new RescueRoute(ref s1, ref s2, 180);
-//Instance modules ---------------------------------------------
 
+//----------------------------- Main ---------------------------------------//
+List<double[]> INPUT = new List<double[]>();
+List<double> OUTPUT = new List<double>();
+
+#if (false) //DEBUG MODE MAIN
+
+//Setup debug program
+void setup() {
+	AI.Analyzer.setup();
+}
+
+//Main loop debug
+void loop() {
+	var tempResult = AI.Trainner.reflectives(0);
+	INPUT.Add(tempResult.input);
+	OUTPUT.Add(tempResult.output);
+	Time.sleep(48);
+}
+
+string parseArray1D(double[][] arr) {
+	var s = new System.Text.StringBuilder();
+	foreach (var info in arr) {
+		s.Append("{");
+		foreach (var item in info) {
+			s.Append($"{item.ToString().Replace(',', '.')}, ");
+		}
+		s.Remove(s.Length - 2, 2);
+		s.Append("}, ");
+	}
+	s.Remove(s.Length - 2, 2);
+	return s.ToString();
+}
+
+void Main() {
+	setup();
+
+	//AI.Controller.train(
+	//	new double[,] {
+	{0, 0, 1}, {0, 1, 1}, {1, 1, 1}, {0, 0, 0}, {1, 0, 0}
+	//	},
+	//	new double[,] {
+	{1, 1, 1, 0, 1}
+	//	},
+	//	new double[,] { { 0, 0, 1 } },
+	//	5000
+	//);
+
+
+	for (int i = 0; i <= 512; i++) {
+		Log.debug(i);
+		loop();
+	}
+
+	AI.Result.export(parseArray1D(INPUT.ToArray()), "input_train");
+	AI.Result.export("{" + String.Join(", ", OUTPUT.ToArray()) + "}", "output_train");
+}
+
+#else //DEFAULT MAIN
 
 //Setup program
 void setup() {
@@ -1878,23 +1958,6 @@ void loop() {
 	mainObstacle.verify();
 	mainRescue.verify();
 }
-
-//----------------------------- Main ---------------------------------------//
-
-#if (true) //DEBUG MODE MAIN
-
-void Main() {
-	AI.Analyzer.setup();
-	AI.Controller.train(
-		new double[,] { { 0, 0, -1 }, { 1, 1, 1 }, { 1, 0, 1 }, { 0, 1, 1 } },
-		new double[,] { { 0, 1, 1, 0 } },
-		new double[,] { { 0, 0, 1 } }
-		);
-	//for (; ; ) {
-	//}
-}
-
-#else //DEFAULT MAIN
 
 void Main() {
 	setup();

@@ -1,6 +1,6 @@
 static private class Security {
 	public static void verify(FloorRoute.FollowLine Follower) {
-		if (Time.timer.millis > (2800 - (Follower.velocity * 13)) && mainRescue.rampTimer == 0 && !floor.isOnRange(Gyroscope.z)) {
+		if (Time.timer.millis > (2800 - (Follower.velocity * 10)) && mainRescue.rampTimer == 0 && !floor.isOnRange(Gyroscope.z)) {
 			Security.checkInLine(Follower, () => Security.backToLine(Follower));
 			Time.resetTimer();
 		}
@@ -29,8 +29,8 @@ static private class Security {
 
 	private static bool findLine(FloorRoute.FollowLine Follower) {
 		Degrees defaultAxis = Gyroscope.x;
-		Degrees max = new Degrees(defaultAxis.raw - 10);
-
+		Degrees max = new Degrees(defaultAxis.raw - 15);
+		Degrees min = new Degrees(defaultAxis.raw + 15);
 		Func<Degrees, bool> findLineBase = (degrees) => {
 			while (!(Gyroscope.x % degrees)) {
 				if (CrossPath.checkLine(Follower)) {
@@ -45,9 +45,8 @@ static private class Security {
 		if (findLineBase(max)) { return true; }
 		Servo.stop();
 
-		max = new Degrees(defaultAxis.raw + 20);
 		Servo.right();
-		if (findLineBase(max)) { return true; }
+		if (findLineBase(min)) { return true; }
 		Servo.stop();
 
 		Servo.left();
