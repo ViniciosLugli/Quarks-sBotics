@@ -114,8 +114,8 @@ public static class Time {
 	static public Clock timer {
 		get => new Clock(bc.Timer());
 	}
-	public static Clock currentUnparsed {
-		get => new Clock((int)(DateTimeOffset.Now.ToUnixTimeMilliseconds() - SETUPTIME));
+	public static long currentUnparsed {
+		get => DateTimeOffset.Now.ToUnixTimeMilliseconds();
 	}
 
 	public static void resetTimer() => bc.ResetTimer();
@@ -992,9 +992,9 @@ public class AI {
 			var curNeuralNetwork = new AI.Neural.NeuralNetWork(1, trainingInputs.GetLength(1));
 	
 			Analyzer.logLine("INFOS");
-			Analyzer.log($"trainingInputs: [{ToMatrixString(trainingInputs)}]");
-			Analyzer.log($"trainingOutputs: [{ToMatrixString(trainingOutputs)}]");
-			Analyzer.log($"thinkOutput: [{ToMatrixString(thinkOutput)}]");
+			Analyzer.log($"trainingInputs: {ToMatrixString(trainingInputs)}");
+			Analyzer.log($"trainingOutputs: {ToMatrixString(trainingOutputs)}");
+			Analyzer.log($"thinkOutput: {ToMatrixString(thinkOutput)}");
 			Analyzer.log($"interactions: {interactions}lps");
 			Analyzer.logLine();
 			Analyzer.log("");
@@ -1075,7 +1075,7 @@ public static class FloorRoute {
 	
 			if (Green.verify(this)) { return; }
 	
-			if (checkSensor(ref this.s1, () => Servo.left(), () => CrossPath.findLineLeft(this))) { } else if (checkSensor(ref this.s2, () => Servo.right(), () => CrossPath.findLineRight(this))) { } else { Servo.foward(this.velocity); Security.verify(this); }
+			if (checkSensor(ref this.s1, () => Servo.left(), () => CrossPath.findLineLeft(this))) { } else if (checkSensor(ref this.s2, () => Servo.right(), () => CrossPath.findLineRight(this))) { } else { Servo.foward(this.velocity); /*Security.verify(this);*/ }
 		}
 	
 		private bool checkSensor(ref Reflective refsensor_, ActionHandler correctCallback, ActionHandler crossCallback) {
@@ -1883,7 +1883,7 @@ static DegreesRange floor = new DegreesRange(355, 5);
 static Reflective s1 = new Reflective(1), s2 = new Reflective(0);
 static Ultrassonic uFrontal = new Ultrassonic(0), uRight = new Ultrassonic(1);
 
-static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, 145);
+static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, 180);
 static FloorRoute.Obstacle mainObstacle = new FloorRoute.Obstacle(ref uFrontal, 26);
 static RescueRoute mainRescue = new RescueRoute(ref s1, ref s2, 180);
 
@@ -1893,55 +1893,69 @@ List<double> OUTPUT = new List<double>();
 
 #if (false) //DEBUG MODE MAIN
 
-//Setup debug program
-void setup() {
-	AI.Analyzer.setup();
-}
+////Setup debug program
+//void setup() {
+//	AI.Analyzer.setup();
+//}
 
-//Main loop debug
-void loop() {
-	var tempResult = AI.Trainner.reflectives(0);
-	INPUT.Add(tempResult.input);
-	OUTPUT.Add(tempResult.output);
-	Time.sleep(48);
-}
+////Main loop debug
+//void loop() {
+//	var tempResult = AI.Trainner.reflectives(0);
+//	INPUT.Add(tempResult.input);
+//	OUTPUT.Add(tempResult.output);
+//	Time.sleep(48);
+//}
 
-string parseArray1D(double[][] arr) {
-	var s = new System.Text.StringBuilder();
-	foreach (var info in arr) {
-		s.Append("{");
-		foreach (var item in info) {
-			s.Append($"{item.ToString().Replace(',', '.')}, ");
-		}
-		s.Remove(s.Length - 2, 2);
-		s.Append("}, ");
-	}
-	s.Remove(s.Length - 2, 2);
-	return s.ToString();
-}
+//string parseArray1D(double[][] arr) {
+//	var s = new System.Text.StringBuilder();
+//	foreach (var info in arr) {
+//		s.Append("{");
+//		foreach (var item in info) {
+//			s.Append($"{item.ToString().Replace(',', '.')}, ");
+//		}
+//		s.Remove(s.Length - 2, 2);
+//		s.Append("}, ");
+//	}
+//	s.Remove(s.Length - 2, 2);
+//	return s.ToString();
+//}
+
+//void Main() {
+//	setup();
+
+//AI.Controller.train(
+//	new double[,] {
+//		import("Variables/input_train")
+//	},
+//	new double[,] {
+//		import("Variables/output_train")
+//	},
+//	new double[,] { { 0, 0, 1 } },
+//	5000
+//);
+
+
+//	for (int i = 0; i <= 512; i++) {
+//		Log.debug(i);
+//		loop();
+//	}
+
+//	AI.Result.export(parseArray1D(INPUT.ToArray()), "input_train");
+//	AI.Result.export("{" + String.Join(", ", OUTPUT.ToArray()) + "}", "output_train");
+//}
 
 void Main() {
-	setup();
-
-	//AI.Controller.train(
-	//	new double[,] {
-	{0, 0, 1}, {0, 1, 1}, {1, 1, 1}, {0, 0, 0}, {1, 0, 0}
-	//	},
-	//	new double[,] {
-	{1, 1, 1, 0, 1}
-	//	},
-	//	new double[,] { { 0, 0, 1 } },
-	//	5000
-	//);
-
-
-	for (int i = 0; i <= 512; i++) {
-		Log.debug(i);
-		loop();
+	long currentTime = Time.currentUnparsed;
+	float pval = s1.light.raw;
+	float after = s1.light.raw;
+	Servo.right();
+	while (pval == after) {
+		after = s1.light.raw;
 	}
-
-	AI.Result.export(parseArray1D(INPUT.ToArray()), "input_train");
-	AI.Result.export("{" + String.Join(", ", OUTPUT.ToArray()) + "}", "output_train");
+	Log.debug($"Time: {Time.currentUnparsed - currentTime}");
+	Log.info($"values: {pval} -> {after}");
+	Servo.stop();
+	Time.sleep(16);
 }
 
 #else //DEFAULT MAIN

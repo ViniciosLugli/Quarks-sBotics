@@ -31,9 +31,9 @@ public static class Controller {
 		var curNeuralNetwork = new AI.Neural.NeuralNetWork(1, trainingInputs.GetLength(1));
 
 		Analyzer.logLine("INFOS");
-		Analyzer.log($"trainingInputs: [{ToMatrixString(trainingInputs)}]");
-		Analyzer.log($"trainingOutputs: [{ToMatrixString(trainingOutputs)}]");
-		Analyzer.log($"thinkOutput: [{ToMatrixString(thinkOutput)}]");
+		Analyzer.log($"trainingInputs: {ToMatrixString(trainingInputs)}");
+		Analyzer.log($"trainingOutputs: {ToMatrixString(trainingOutputs)}");
+		Analyzer.log($"thinkOutput: {ToMatrixString(thinkOutput)}");
 		Analyzer.log($"interactions: {interactions}lps");
 		Analyzer.logLine();
 		Analyzer.log("");

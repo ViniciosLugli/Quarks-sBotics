@@ -8,8 +8,8 @@ public static class Time {
 	static public Clock timer {
 		get => new Clock(bc.Timer());
 	}
-	public static Clock currentUnparsed {
-		get => new Clock((int)(DateTimeOffset.Now.ToUnixTimeMilliseconds() - SETUPTIME));
+	public static long currentUnparsed {
+		get => DateTimeOffset.Now.ToUnixTimeMilliseconds();
 	}
 
 	public static void resetTimer() => bc.ResetTimer();
