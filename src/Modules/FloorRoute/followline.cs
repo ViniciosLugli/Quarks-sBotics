@@ -20,13 +20,13 @@ public class FollowLine {
 
 		if (Green.verify(this)) { return; }
 
-		if (checkSensor(ref this.s1, () => Servo.left(), () => CrossPath.findLineLeft(this))) { } else if (checkSensor(ref this.s2, () => Servo.right(), () => CrossPath.findLineRight(this))) { } else { Servo.foward(this.velocity); /*Security.verify(this);*/ }
+		if (checkSensor(ref this.s1, () => Servo.left(), () => CrossPath.findLineLeft(this))) { } else if (checkSensor(ref this.s2, () => Servo.right(), () => CrossPath.findLineRight(this))) { } else { Servo.foward(this.velocity); Security.verify(this); }
 	}
 
 	private bool checkSensor(ref Reflective refsensor_, ActionHandler correctCallback, ActionHandler crossCallback) {
 		if (refsensor_.light.raw < 55 && !refsensor_.isColored() && !refsensor_.isMat()) {
 			correctCallback();
-			Clock timeout = new Clock(Time.current.millis + 176);
+			Clock timeout = new Clock(Time.current.millis + 128);
 			while (refsensor_.light.raw < 55) {
 				if (Green.verify(this)) { return true; }
 				if (Time.current > timeout) {

@@ -21,7 +21,7 @@ import("Base/Attributes/debug.cs");
 
 
 //Modules for competition challenges
-import("Modules/AI/ai.cs");
+//import("Modules/AI/ai.cs");
 import("Modules/FloorRoute/floorRoute.cs");
 import("Modules/RescueRoute/rescueRoute.cs");
 
@@ -40,10 +40,10 @@ static FloorRoute.Obstacle mainObstacle = new FloorRoute.Obstacle(ref uFrontal, 
 static RescueRoute mainRescue = new RescueRoute(ref s1, ref s2, 180);
 
 //----------------------------- Main ---------------------------------------//
-List<double[]> INPUT = new List<double[]>();
-List<double> OUTPUT = new List<double>();
+//List<double[]> INPUT = new List<double[]>();
+//List<double> OUTPUT = new List<double>();
 
-#if (false) //DEBUG MODE MAIN
+#if (false) //DEBUG MODE MAIN ------------------------------------
 
 ////Setup debug program
 //void setup() {
@@ -110,7 +110,7 @@ void Main() {
 	Time.sleep(16);
 }
 
-#else //DEFAULT MAIN
+#else //DEFAULT MAIN ------------------------------------------------------------------------------------
 
 //Setup program
 void setup() {
