@@ -18,15 +18,15 @@ public class Reflective {
 				bc.ReturnBlue((int)this.SensorIndex)
 			);
 	}
-	public bool hasLine() => bc.ReturnRed((int)this.SensorIndex) < 55 && bc.ReturnGreen((int)this.SensorIndex) < 55;
+	public bool hasLine() => bc.ReturnRed((int)this.SensorIndex) < 50 && bc.ReturnGreen((int)this.SensorIndex) < 50 && bc.Lightness((int)this.SensorIndex) < 52;
 
-	public bool isMat() => bc.ReturnRed((int)this.SensorIndex) > 50;
+	public bool isMat() => bc.ReturnRed((int)this.SensorIndex) > 50 && bc.ReturnBlue((int)this.SensorIndex) < 20 && bc.ReturnGreen((int)this.SensorIndex) < 20;
 
 	public bool isColored() {
 		for (int i = 0; i < 4; i++) {
 			float r = bc.ReturnRed((int)this.SensorIndex);
 			float b = bc.ReturnBlue((int)this.SensorIndex);
-			if (!((r + 2) > b && (r - 2) < b)) {
+			if (!((r + 3) > b && (r - 3) < b)) {
 				return true;
 			}
 		}

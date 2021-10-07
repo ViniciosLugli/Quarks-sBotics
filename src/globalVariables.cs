@@ -15,6 +15,10 @@ static Color cFakeGreen = new Color(255, 255, 0);
 static Color cAlertOffline = new Color(255, 0, 0);
 static Color cRampFollowLine = new Color(255, 0, 255);
 
+static Direction cLeftMovement = new Direction(300, -70);
+static Direction cRightMovement = new Direction(-70, 300);
+static float cDegreesMovementProp = 3.5f;
+
 static int SETUPTIME = Time.current.millis;
 
 static byte UNIQUEID = 0;

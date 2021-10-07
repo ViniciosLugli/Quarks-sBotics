@@ -16,6 +16,10 @@ static Color cFakeGreen = new Color(255, 255, 0);
 static Color cAlertOffline = new Color(255, 0, 0);
 static Color cRampFollowLine = new Color(255, 0, 255);
 
+static Direction cLeftMovement = new Direction(300, -70);
+static Direction cRightMovement = new Direction(-70, 300);
+static float cDegreesMovementProp = 3.5f;
+
 static int SETUPTIME = Time.current.millis;
 
 static byte UNIQUEID = 0;
@@ -297,6 +301,40 @@ public static class Gyroscope {
 		}
 	}
 
+	public static float? inRawPoint(bool angExpand = true, byte offset = 8) {
+		if (angExpand) {
+			foreach (Degrees point in Gyroscope.points) {
+				if (((Gyroscope.x.raw + offset) >= point.raw) && (Gyroscope.x.raw - offset <= point.raw)) {
+					return point.raw;
+				}
+			}
+		} else {
+			foreach (Degrees point in Gyroscope.points) {
+				if (Gyroscope.x % point) {
+					return point.raw;
+				}
+			}
+		}
+		return null;
+	}
+
+	public static float? inRawDiagonal(bool angExpand = true, byte offset = 8) {
+		if (angExpand) {
+			foreach (Degrees diagonal in Gyroscope.diagonals) {
+				if (((Gyroscope.x.raw + offset) >= diagonal.raw) && (Gyroscope.x.raw - offset <= diagonal.raw)) {
+					return diagonal.raw;
+				}
+			}
+		} else {
+			foreach (Degrees diagonal in Gyroscope.diagonals) {
+				if (Gyroscope.x % diagonal) {
+					return diagonal.raw;
+				}
+			}
+		}
+		return null;
+	}
+
 	public static bool isLifted() => Gyroscope.z.raw > 300 && Gyroscope.z.raw < 358;
 
 	public static void NOP() {
@@ -311,22 +349,44 @@ public struct Color {
 		this.r = r_;
 		this.g = g_;
 		this.b = b_;
+
+		this.pR = 0;
+		this.pG = 0;
+		this.pB = 0;
 	}
 
 	public float r;
 	public float g;
 	public float b;
 
+	private byte pR;
+	private byte pG;
+	private byte pB;
+
 	public float[] raw {
 		get => new float[] { this.r, this.g, this.b };
 	}
 
-	public bool hasGreen() {
+	private void updatePorcentRGB() {
 		float rgb = this.r + this.g + this.b;
-		byte pR = (byte)Calc.map(this.r, 0, rgb, 0, 100);
-		byte pG = (byte)Calc.map(this.g, 0, rgb, 0, 100);
-		byte pB = (byte)Calc.map(this.b, 0, rgb, 0, 100);
-		return ((pG > pR) && (pG > pB) && (pG > 65));
+		this.pR = (byte)Calc.map(this.r, 0, rgb, 0, 100);
+		this.pG = (byte)Calc.map(this.g, 0, rgb, 0, 100);
+		this.pB = (byte)Calc.map(this.b, 0, rgb, 0, 100);
+	}
+
+	public string showPorcentRGB() {
+		this.updatePorcentRGB();
+		return $"R: {this.pR} | G: {this.pG} | B: {this.pB}";
+	}
+
+	public bool hasGreen() {
+		this.updatePorcentRGB();
+		return ((this.pG > this.pR) && (this.pG > this.pB) && (this.pG > 65));
+	}
+
+	public bool hasKit() {
+		this.updatePorcentRGB();
+		return ((this.pR < 20) && (this.pB > this.pR) && (this.pB > this.pG) && (this.pB > 40));
 	}
 
 	public string toHex() {
@@ -394,15 +454,15 @@ public class Reflective {
 				bc.ReturnBlue((int)this.SensorIndex)
 			);
 	}
-	public bool hasLine() => bc.ReturnRed((int)this.SensorIndex) < 55 && bc.ReturnGreen((int)this.SensorIndex) < 55;
+	public bool hasLine() => bc.ReturnRed((int)this.SensorIndex) < 50 && bc.ReturnGreen((int)this.SensorIndex) < 50 && bc.Lightness((int)this.SensorIndex) < 52;
 
-	public bool isMat() => bc.ReturnRed((int)this.SensorIndex) > 50;
+	public bool isMat() => bc.ReturnRed((int)this.SensorIndex) > 50 && bc.ReturnBlue((int)this.SensorIndex) < 20 && bc.ReturnGreen((int)this.SensorIndex) < 20;
 
 	public bool isColored() {
 		for (int i = 0; i < 4; i++) {
 			float r = bc.ReturnRed((int)this.SensorIndex);
 			float b = bc.ReturnBlue((int)this.SensorIndex);
-			if (!((r + 2) > b && (r - 2) < b)) {
+			if (!((r + 3) > b && (r - 3) < b)) {
 				return true;
 			}
 		}
@@ -471,14 +531,14 @@ public static class Actuator {
 
 		if (degrees > local_angle) {
 			while (degrees > local_angle) {
-				bc.ActuatorUp(1);
+				bc.ActuatorUp(32);
 				if (Time.current.millis > timeout) { return; }
 				local_angle = bc.AngleActuator();
 				Log.info($"local_angle: {local_angle}");
 			}
 		} else if (degrees < local_angle) {
 			while (degrees < local_angle) {
-				bc.ActuatorDown(1);
+				bc.ActuatorDown(32);
 				if (Time.current.millis > timeout) { return; }
 				local_angle = bc.AngleActuator();
 				Log.info($"local_angle: {local_angle}");
@@ -499,14 +559,14 @@ public static class Actuator {
 
 		if (degrees > local_angle) {
 			while (degrees > local_angle) {
-				bc.TurnActuatorDown(1);
+				bc.TurnActuatorDown(32);
 				if (Time.current.millis > timeout) { return; }
 				local_angle = bc.AngleScoop();
 				Log.info($"local_angle: {local_angle}");
 			}
 		} else if (degrees < local_angle) {
 			while (degrees < local_angle) {
-				bc.TurnActuatorUp(1);
+				bc.TurnActuatorUp(32);
 				if (Time.current.millis > timeout) { return; }
 				local_angle = bc.AngleScoop();
 				Log.info($"local_angle: {local_angle}");
@@ -516,6 +576,10 @@ public static class Actuator {
 
 	public static bool victim {
 		get => bc.HasVictim();
+	}
+
+	public static bool kit {
+		get => bc.HasRescueKit();
 	}
 
 	public static void open() {
@@ -551,16 +615,27 @@ public static class Actuator {
 		bc.AngleScoop();
 	}
 }
+public struct Direction {
+	public Direction(int left_, int right_) {
+		this.left = left_;
+		this.right = right_;
+	}
+
+	public int left, right;
+}
+
 public static class Servo {
+	public static void move(Direction direction) => bc.Move(direction.left, direction.right);
 	public static void move(float left = 300, float right = 300) => bc.Move(left, right);
 
-	public static void foward(float velocity = 300) => bc.Move(Math.Abs(velocity), Math.Abs(velocity));
+	public static void forward(float velocity = 300) => bc.Move(Math.Abs(velocity), Math.Abs(velocity));
 
 	public static void backward(float velocity = 300) => bc.Move(-velocity, -velocity);
 
 	public static void left(float velocity = 1000) => bc.Move(-velocity, +velocity);
 
 	public static void right(float velocity = 1000) => bc.Move(+velocity, -velocity);
+
 
 	public static void rotate(float angle, float velocity = 500) => bc.MoveFrontalAngles(velocity, angle);
 	public static void rotate(Degrees angle, float velocity = 500) => bc.MoveFrontalAngles(velocity, angle.raw);
@@ -665,6 +740,65 @@ public static class Servo {
 		Servo.stop();
 	}
 
+	public static bool SmoothAlignNextAngle(FloorRoute.FollowLine Follower) {
+
+		if (Gyroscope.inPoint(true, 1) || Gyroscope.inDiagonal(true, 1)) { return false; }
+
+		Degrees alignLocal = new Degrees(0);
+
+		float? temp = Gyroscope.inRawPoint(true, 22);
+
+		if (temp is null) {
+			temp = Gyroscope.inRawDiagonal(true, 10);
+			if (temp is null) {
+				return false;
+			}
+		}
+		alignLocal = new Degrees((float)temp);
+
+		float diffDegrees = Math.Abs(alignLocal.raw - Gyroscope.x.raw);
+
+		Log.debug(Formatter.parse($"Smooth to {alignLocal.raw}° | Diff: {diffDegrees}°", new string[] { "i", "color=#505050" }));
+
+		diffDegrees = diffDegrees * cDegreesMovementProp;
+
+		void leftMove() {
+			Direction filtred = cLeftMovement;
+			if (diffDegrees > 16) {
+				filtred.right = (int)(filtred.right - 60);
+				filtred.left = (int)(filtred.left);
+			} else {
+				filtred.right = (int)(filtred.right - diffDegrees);
+			}
+			Follower.moveVelocity = filtred;
+		}
+
+		void rightMove() {
+			Direction filtred = cRightMovement;
+			if (diffDegrees > 16) {
+				filtred.left = (int)(filtred.left - 60);
+				filtred.right = (int)(filtred.right);
+			} else {
+				filtred.left = (int)(filtred.left - diffDegrees);
+			}
+			Follower.moveVelocity = filtred;
+		}
+
+		if ((alignLocal.raw == 0) && (Gyroscope.x.raw > 180)) {
+			leftMove();
+		} else if ((alignLocal.raw == 0) && (Gyroscope.x.raw < 180)) {
+			rightMove();
+		} else if (Gyroscope.x < alignLocal) {
+			leftMove();
+		} else if (Gyroscope.x > alignLocal) {
+			rightMove();
+		} else {
+			Log.proc();
+			Log.info(Formatter.parse("Oh fuck 2", new string[] { "i", "color=#505050" }));
+		}
+		return true;
+	}
+
 	private static bool ultraGoToRecursive(Ultrassonic ultra, ActionHandler callback) {
 		Log.info(Formatter.parse($"ultra: {ultra.distance.raw}, speed: {Servo.speed()}", new string[] { "i", "color=#505050" }));
 		Servo.antiLifting();
@@ -686,7 +820,7 @@ public static class Servo {
 		} else {
 			while (position < ultra.distance.raw) {
 				if (ultraGoToRecursive(ultra, callback)) { break; }
-				Servo.foward(velocity);
+				Servo.forward(velocity);
 			}
 		}
 		Servo.stop();
@@ -704,7 +838,7 @@ public static class Servo {
 		} else {
 			while (dist < ultra.distance) {
 				if (ultraGoToRecursive(ultra, callback)) { break; }
-				Servo.foward(velocity);
+				Servo.forward(velocity);
 			}
 		}
 		Servo.stop();
@@ -740,20 +874,22 @@ public struct Vector2 {
 //import("Modules/AI/ai.cs");
 public static class FloorRoute {
 	public class FollowLine {
-		public FollowLine(ref Reflective refs1_, ref Reflective refs2_, int velocity_) {
+		public FollowLine(ref Reflective refs1_, ref Reflective refs2_, int defaultVelocity_) {
 			this.s1 = refs1_;
 			this.s2 = refs2_;
-			this.velocity = velocity_;
+			this.defaultVelocity = defaultVelocity_;
+			this.moveVelocity = new Direction(defaultVelocity_, defaultVelocity_);
 		}
 	
 		public Reflective s1, s2;
-		public int velocity = 0;
+		public int defaultVelocity = 0;
+		public Direction moveVelocity = new Direction(0, 0);
 		public Clock lastGreen = new Clock(0);
 		public Clock lastCrossPath = new Clock(0);
 	
-		private void debugSensors() {
-			Log.info(Formatter.parse($"{this.s1.light.raw} | {this.s2.light.raw}", new string[] { "align=center", "color=#FFEA79", "b" }));
-		}
+		private void debugSensors() => Log.info(Formatter.parse($"{this.s1.light.raw} | {this.s2.light.raw}", new string[] { "align=center", "color=#FFEA79", "b" }));
+	
+		public void resetMovement() => this.moveVelocity = new Direction(this.defaultVelocity, this.defaultVelocity);
 	
 		public void proc() {
 			Log.proc();
@@ -761,13 +897,21 @@ public static class FloorRoute {
 	
 			if (Green.verify(this)) { return; }
 	
-			if (checkSensor(ref this.s1, () => Servo.left(), () => CrossPath.findLineLeft(this))) { } else if (checkSensor(ref this.s2, () => Servo.right(), () => CrossPath.findLineRight(this))) { } else { Servo.foward(this.velocity); Security.verify(this); }
+			if (checkSensor(ref this.s1, () => Servo.left(), () => CrossPath.findLineLeft(this))) {
+	
+			} else if (checkSensor(ref this.s2, () => Servo.right(), () => CrossPath.findLineRight(this))) {
+	
+			} else {
+				Servo.move(this.moveVelocity);
+				Security.verify(this);
+				RescueKit.verify(this);
+			}
 		}
 	
 		private bool checkSensor(ref Reflective refsensor_, ActionHandler correctCallback, ActionHandler crossCallback) {
-			if (refsensor_.light.raw < 55 && !refsensor_.isColored() && !refsensor_.isMat()) {
+			if (refsensor_.light.raw < 55 && !refsensor_.isMat()) {
 				correctCallback();
-				Clock timeout = new Clock(Time.current.millis + 128);
+				Clock timeout = new Clock(Time.current.millis + 128 + 16);
 				while (refsensor_.light.raw < 55) {
 					if (Green.verify(this)) { return true; }
 					if (Time.current > timeout) {
@@ -780,7 +924,7 @@ public static class FloorRoute {
 					}
 				}
 				Time.sleep(32, () => Green.verify(this));
-				Servo.foward(this.velocity);
+				Servo.forward(this.defaultVelocity);
 				Time.sleep(32, () => Green.verify(this));
 				Servo.stop();
 				if (Green.verify(this)) { return true; }
@@ -815,21 +959,26 @@ public static class FloorRoute {
 		}
 	
 		public static void findLineLeft(FloorRoute.FollowLine Follower) {
+			Log.clear();
+			Log.info(Formatter.parse($"Align to left", new string[] { "i", "color=#505050" }));
 			CrossPath.findLineBase(Follower, new ActionHandler[] { () => Servo.left(), () => Servo.right(), () => Servo.nextAngleLeft(10) }, -90);
 		}
 	
 		public static void findLineRight(FloorRoute.FollowLine Follower) {
+			Log.clear();
+			Log.info(Formatter.parse($"Align to right", new string[] { "i", "color=#505050" }));
 			CrossPath.findLineBase(Follower, new ActionHandler[] { () => Servo.right(), () => Servo.left(), () => Servo.nextAngleRight(10) }, 90);
 		}
 	
 		private static void findLineBase(FloorRoute.FollowLine Follower, ActionHandler[] turnsCallback, float maxDegrees) {
-			if ((Follower.lastCrossPath.millis + 256) > Time.current.millis) { Buzzer.play(sMultiplesCross); return; }
+			// FIXME: Remake
+			//if ((Follower.lastCrossPath.millis + 256) > Time.current.millis) { Buzzer.play(sMultiplesCross); return; }
+	
 			CrossPath.notify();
-			Log.clear();
 			Log.proc();
 			Degrees max = new Degrees(Gyroscope.x.raw + maxDegrees);
 			Servo.encoder(7f);
-			Servo.rotate(-(maxDegrees / 9));
+			//Servo.rotate(-(maxDegrees / 9)); // Check line before turn, inveted axis!
 			turnsCallback[0]();
 			while (true) {
 				if (CrossPath.checkLine(Follower)) { Follower.lastCrossPath = Time.current; Time.resetTimer(); return; }
@@ -870,13 +1019,13 @@ public static class FloorRoute {
 		}
 	
 		public static bool checkLine(FloorRoute.FollowLine Follower) {
-			if (Follower.s1.light.raw < 55 && !Follower.s1.isColored() && !Follower.s1.isMat()) {
+			if (Follower.s1.light.raw < 55 && !Follower.s1.isMat()) {
 				Servo.stop();
 				Buzzer.play(sFindLine);
 				Servo.rotate(-2f);
 				return true;
 			}
-			if (Follower.s2.light.raw < 55 && !Follower.s2.isColored() && !Follower.s2.isMat()) {
+			if (Follower.s2.light.raw < 55 && !Follower.s2.isMat()) {
 				Servo.stop();
 				Buzzer.play(sFindLine);
 				Servo.rotate(2f);
@@ -885,7 +1034,7 @@ public static class FloorRoute {
 			return false;
 		}
 	
-		public static bool verify(Reflective tsensor) => tsensor.light.raw < 45 && !tsensor.isMat() && !tsensor.isColored();
+		public static bool verify(Reflective tsensor) => tsensor.light.raw < 50 && !tsensor.isMat();
 	}
 	public class Green {
 	
@@ -927,7 +1076,7 @@ public static class FloorRoute {
 		public static bool verify(FloorRoute.FollowLine Follower) {
 			if (Follower.s1.rgb.hasGreen() || Follower.s2.rgb.hasGreen()) {
 				Follower.alignSensors();
-				Servo.foward();
+				Servo.forward();
 				Time.sleep(32);
 				Servo.stop();
 				if (Follower.s1.rgb.hasGreen() && Follower.s2.rgb.hasGreen()) {
@@ -955,83 +1104,128 @@ public static class FloorRoute {
 		private byte distance;
 	
 		public void verify() {
-			if (uObs.distance.raw > 16 && uObs.distance.raw < this.distance && Time.current.millis > 3000) {
+			if (uObs.distance.raw > 16 && uObs.distance.raw < this.distance && Time.current.millis > 1500) {
 				this.dodge();
 				this.verify();
 			}
 		}
 	
 		public void dodge() {
+			// Find line left
 			Servo.stop();
 			Servo.alignNextAngle();
-			Servo.rotate(58);
-			Servo.encoder(7);
-			Servo.rotate(-27);
-			Servo.encoder(7);
-			Servo.rotate(-15);
-			Servo.encoder(9);
-			Servo.rotate(-10);
-			Servo.encoder(17);
-			Servo.nextAngleLeft(10);
-			Servo.encoder(12);
-			Servo.nextAngleRight(10);
+			Servo.encoder(-4);
+			Servo.rotate(-35);
+			Servo.encoder(10);
+	
+			Servo.forward(200);
+			int timeout = Time.current.millis + 256 + 64;
+			while (Time.current.millis < timeout) {
+				if ((s1.hasLine() && !s1.isMat()) || (s2.hasLine() && !s2.isMat())) {
+					Servo.encoder(9);
+					Servo.rotate(-10);
+					Servo.encoder(7);
+					Servo.nextAngleLeft(10);
+					Servo.backward(300);
+					Time.sleep(128);
+					Servo.stop();
+					return;
+				}
+			}
+	
+			// Find line right
+			Servo.encoder(-20);
+			Servo.rotate(35);
+			Servo.alignNextAngle();
+	
+			Servo.rotate(35);
+			Servo.encoder(10);
+	
+			Servo.forward(200);
+			timeout = Time.current.millis + 256 + 64;
+			while (Time.current.millis < timeout) {
+				if ((s1.hasLine() && !s1.isMat()) || (s2.hasLine() && !s2.isMat())) {
+					Servo.encoder(9);
+					Servo.rotate(10);
+					Servo.encoder(7);
+					Servo.nextAngleRight(10);
+					Servo.backward(300);
+					Time.sleep(128);
+					Servo.stop();
+					return;
+				}
+			}
+			Servo.stop();
+	
+			// Find line straight
+			Servo.rotate(-20);
+			Servo.encoder(14);
+			Servo.rotate(-70);
+	
+			Servo.forward(200);
+			timeout = Time.current.millis + 256 + 128;
+			while (Time.current.millis < timeout) {
+				if ((s1.hasLine() && !s1.isMat()) || (s2.hasLine() && !s2.isMat())) {
+					Servo.encoder(9);
+					Servo.rotate(10);
+					Servo.encoder(7);
+					Servo.nextAngleRight(10);
+					Servo.backward(300);
+					Time.sleep(128);
+					Servo.stop();
+					return;
+				}
+			}
+			Servo.stop();
 		}
 	}
 	static private class Security {
 		public static void verify(FloorRoute.FollowLine Follower) {
-			if (Time.timer.millis > (2800 - (Follower.velocity * 10)) && mainRescue.rampTimer == 0 && !floor.isOnRange(Gyroscope.z)) {
-				Security.checkInLine(Follower, () => Security.backToLine(Follower));
-				Time.resetTimer();
-			}
-		}
-	
-		private static void backToLine(FloorRoute.FollowLine Follower) {
-			while (!Security.findLine(Follower)) { Servo.encoder(-6); }
-		}
-	
-		private static void checkInLine(FloorRoute.FollowLine Follower, ActionHandler callback) {
-			Clock timeout = new Clock(Time.current.millis + 256);
-			while (!(Follower.s1.light.raw < 55 && !Follower.s1.isMat()) && !(Follower.s2.light.raw < 55 && !Follower.s2.isMat())) {
-				Servo.left();
-				if (Time.current > timeout) {
-					Servo.right();
-					Time.sleep(256);
-					Servo.stop();
-					callback();
-					return;
+			if (Time.timer.millis > 96) {
+				if (!Servo.SmoothAlignNextAngle(Follower)) {
+					Follower.resetMovement();
 				}
+				return;
 			}
-			Servo.right();
-			Time.sleep(timeout - Time.current);
-			Servo.stop();
+			Follower.resetMovement();
 		}
+	}
+	static private class RescueKit {
+		public static void verify(FloorRoute.FollowLine Follower) {
+			if (s3.rgb.hasKit()) {
+				Degrees saveDirection = Gyroscope.x;
+				Servo.alignNextAngle();
+				Servo.backward(300);
+				Time.sleep(400);
+				Servo.stop();
 	
-		private static bool findLine(FloorRoute.FollowLine Follower) {
-			Degrees defaultAxis = Gyroscope.x;
-			Degrees max = new Degrees(defaultAxis.raw - 15);
-			Degrees min = new Degrees(defaultAxis.raw + 15);
-			Func<Degrees, bool> findLineBase = (degrees) => {
-				while (!(Gyroscope.x % degrees)) {
-					if (CrossPath.checkLine(Follower)) {
+				Actuator.open();
+				Actuator.alignDown();
+	
+				int timeout = Time.current.millis + 2000;
+				while (!Actuator.kit) {
+					if (Time.current.millis >= timeout) {
+						Actuator.close();
+						Actuator.alignUp();
+	
+						Servo.backward(300);
+						Time.sleep(400);
 						Servo.stop();
-						return true;
+						break;
 					}
+					Servo.forward(165);
 				}
-				return false;
-			};
+				Servo.forward(130);
+				Time.sleep(900);
+				Servo.stop();
+				Actuator.close();
+				Actuator.alignUp();
 	
-			Servo.left();
-			if (findLineBase(max)) { return true; }
-			Servo.stop();
-	
-			Servo.right();
-			if (findLineBase(min)) { return true; }
-			Servo.stop();
-	
-			Servo.left();
-			if (findLineBase(defaultAxis)) { return true; }
-			Servo.stop();
-			return false;
+				Servo.backward(300);
+				Time.sleep(500);
+				Servo.stop();
+				Servo.alignToAngle(saveDirection);
+			}
 		}
 	}
 }
@@ -1142,7 +1336,7 @@ public class RescueRoute {
 				Servo.rotate(1);
 				Servo.encoder(1);
 			} else {
-				Servo.foward(this.velocity);
+				Servo.forward(this.velocity);
 			}
 		}
 	}
@@ -1162,7 +1356,7 @@ public class RescueRoute {
 			Time.resetTimer();
 			while (Time.timer.millis < maxTime) {
 				Servo.antiLifting();
-				Servo.foward(200);
+				Servo.forward(200);
 				if (uRight.distance.raw > RESCUE_SIZE) {
 					rescue.setExit(exitIndex);
 					callback?.Invoke();
@@ -1288,7 +1482,7 @@ public class RescueRoute {
 			private void exitMain() {
 				while (true) {
 					if ((s1.rgb.g > (s1.rgb.r + 5)) && (s1.rgb.g > (s1.rgb.b + 5))) {
-						Servo.foward(150);
+						Servo.forward(150);
 						while ((s1.rgb.g > (s1.rgb.r + 5)) && (s1.rgb.g > (s1.rgb.b + 5))) { }
 						Servo.stop();
 						Servo.encoder(2);
@@ -1320,21 +1514,21 @@ public class RescueRoute {
 				if (this.tBrain.rescue.exit == 3) {
 					Servo.ultraGoTo(43, ref uFrontal, null, 300);
 					Servo.nextAngleLeft(30);
-					Servo.foward(200);
+					Servo.forward(200);
 					this.exitMain();
 				} else if (this.tBrain.rescue.exit == 2) {
 					Servo.ultraGoTo(43, ref uFrontal, null, 300);
 					Servo.nextAngleRight(30);
 					Servo.ultraGoTo(43, ref uFrontal, null, 300);
 					Servo.nextAngleLeft(30);
-					Servo.foward(200);
+					Servo.forward(200);
 					this.exitMain();
 				} else if (this.tBrain.rescue.exit == 1) {
 					Servo.rotate(180);
 					Servo.alignNextAngle();
 					Servo.ultraGoTo(43, ref uFrontal, null, 300);
 					Servo.nextAngleLeft(30);
-					Servo.foward(200);
+					Servo.forward(200);
 					this.exitMain();
 				}
 			}
@@ -1430,7 +1624,7 @@ public class RescueRoute {
 				Distance saveDist = uFrontal.distance;
 				for (int rotation = 0; rotation < cRotations; rotation++) {
 					Log.info(Formatter.parse($"cRotations: {cRotations}, currentFor: {rotation}", new string[] { "i", "color=#A9DC76" }));
-					Servo.foward(150);
+					Servo.forward(150);
 					Time.sleep(48);
 					lastRotations = rotation;
 					if (Actuator.victim) {
@@ -1468,7 +1662,7 @@ public class RescueRoute {
 				if (!this.capture(realDist)) { return; }
 				this.alignRescue();
 				Log.proc();
-				Servo.foward(200);
+				Servo.forward(200);
 				Time.sleep(192);
 				Time.resetTimer();
 				while (Servo.speed() > 0.2f || Time.timer.millis <= 512) {
@@ -1482,14 +1676,14 @@ public class RescueRoute {
 				for (int i = 0; i < 2; i++) {
 					Servo.backward();
 					Time.sleep(128);
-					Servo.foward();
+					Servo.forward();
 					Time.sleep(128);
 				}
 				if (Actuator.victim) {
 					for (int i = 0; i < 2; i++) {
 						Servo.backward();
 						Time.sleep(128);
-						Servo.foward();
+						Servo.forward();
 						Time.sleep(128);
 					}
 				}
@@ -1566,10 +1760,10 @@ static DegreesRange upRamp = new DegreesRange(330, 355);
 static DegreesRange downRamp = new DegreesRange(5, 30);
 static DegreesRange floor = new DegreesRange(355, 5);
 
-static Reflective s1 = new Reflective(1), s2 = new Reflective(0);
+static Reflective s1 = new Reflective(1), s2 = new Reflective(0), s3 = new Reflective(2);
 static Ultrassonic uFrontal = new Ultrassonic(0), uRight = new Ultrassonic(1);
 
-static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, 180);
+static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, 190);
 static FloorRoute.Obstacle mainObstacle = new FloorRoute.Obstacle(ref uFrontal, 26);
 static RescueRoute mainRescue = new RescueRoute(ref s1, ref s2, 180);
 
@@ -1579,58 +1773,7 @@ static RescueRoute mainRescue = new RescueRoute(ref s1, ref s2, 180);
 
 #if (false) //DEBUG MODE MAIN ------------------------------------
 
-////Setup debug program
-//void setup() {
-//	AI.Analyzer.setup();
-//}
-
-////Main loop debug
-//void loop() {
-//	var tempResult = AI.Trainner.reflectives(0);
-//	INPUT.Add(tempResult.input);
-//	OUTPUT.Add(tempResult.output);
-//	Time.sleep(48);
-//}
-
-//string parseArray1D(double[][] arr) {
-//	var s = new System.Text.StringBuilder();
-//	foreach (var info in arr) {
-//		s.Append("{");
-//		foreach (var item in info) {
-//			s.Append($"{item.ToString().Replace(',', '.')}, ");
-//		}
-//		s.Remove(s.Length - 2, 2);
-//		s.Append("}, ");
-//	}
-//	s.Remove(s.Length - 2, 2);
-//	return s.ToString();
-//}
-
-//void Main() {
-//	setup();
-
-//AI.Controller.train(
-//	new double[,] {
-//		import("Variables/input_train")
-//	},
-//	new double[,] {
-//		import("Variables/output_train")
-//	},
-//	new double[,] { { 0, 0, 1 } },
-//	5000
-//);
-
-
-//	for (int i = 0; i <= 512; i++) {
-//		Log.debug(i);
-//		loop();
-//	}
-
-//	AI.Result.export(parseArray1D(INPUT.ToArray()), "input_train");
-//	AI.Result.export("{" + String.Join(", ", OUTPUT.ToArray()) + "}", "output_train");
-//}
-
-void Main() {
+void testRefreshRate() {
 	long currentTime = Time.currentUnparsed;
 	float pval = s1.light.raw;
 	float after = s1.light.raw;
@@ -1644,11 +1787,24 @@ void Main() {
 	Time.sleep(16);
 }
 
+void showPorcentRGB() {
+	Log.info($"s3: {s3.rgb.showPorcentRGB()}");
+}
+
+void Main() {
+	Buzzer.play(sMultiplesCross);
+	for (; ; ) {
+		//showPorcentRGB();
+	}
+}
+
 #else //DEFAULT MAIN ------------------------------------------------------------------------------------
 
 //Setup program
 void setup() {
-	Actuator.alignUp();
+	//Actuator.alignUp();
+	bc.ActuatorSpeed(150);
+	bc.ActuatorUp(600);
 	Time.resetTimer();
 }
 

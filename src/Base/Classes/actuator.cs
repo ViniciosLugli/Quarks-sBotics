@@ -12,14 +12,14 @@ public static class Actuator {
 
 		if (degrees > local_angle) {
 			while (degrees > local_angle) {
-				bc.ActuatorUp(1);
+				bc.ActuatorUp(32);
 				if (Time.current.millis > timeout) { return; }
 				local_angle = bc.AngleActuator();
 				Log.info($"local_angle: {local_angle}");
 			}
 		} else if (degrees < local_angle) {
 			while (degrees < local_angle) {
-				bc.ActuatorDown(1);
+				bc.ActuatorDown(32);
 				if (Time.current.millis > timeout) { return; }
 				local_angle = bc.AngleActuator();
 				Log.info($"local_angle: {local_angle}");
@@ -40,14 +40,14 @@ public static class Actuator {
 
 		if (degrees > local_angle) {
 			while (degrees > local_angle) {
-				bc.TurnActuatorDown(1);
+				bc.TurnActuatorDown(32);
 				if (Time.current.millis > timeout) { return; }
 				local_angle = bc.AngleScoop();
 				Log.info($"local_angle: {local_angle}");
 			}
 		} else if (degrees < local_angle) {
 			while (degrees < local_angle) {
-				bc.TurnActuatorUp(1);
+				bc.TurnActuatorUp(32);
 				if (Time.current.millis > timeout) { return; }
 				local_angle = bc.AngleScoop();
 				Log.info($"local_angle: {local_angle}");
@@ -57,6 +57,10 @@ public static class Actuator {
 
 	public static bool victim {
 		get => bc.HasVictim();
+	}
+
+	public static bool kit {
+		get => bc.HasRescueKit();
 	}
 
 	public static void open() {

@@ -23,7 +23,7 @@ public class RampFollowLine {
 			Servo.rotate(1);
 			Servo.encoder(1);
 		} else {
-			Servo.foward(this.velocity);
+			Servo.forward(this.velocity);
 		}
 	}
 }

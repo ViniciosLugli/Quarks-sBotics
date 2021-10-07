@@ -48,6 +48,40 @@ public static class Gyroscope {
 		}
 	}
 
+	public static float? inRawPoint(bool angExpand = true, byte offset = 8) {
+		if (angExpand) {
+			foreach (Degrees point in Gyroscope.points) {
+				if (((Gyroscope.x.raw + offset) >= point.raw) && (Gyroscope.x.raw - offset <= point.raw)) {
+					return point.raw;
+				}
+			}
+		} else {
+			foreach (Degrees point in Gyroscope.points) {
+				if (Gyroscope.x % point) {
+					return point.raw;
+				}
+			}
+		}
+		return null;
+	}
+
+	public static float? inRawDiagonal(bool angExpand = true, byte offset = 8) {
+		if (angExpand) {
+			foreach (Degrees diagonal in Gyroscope.diagonals) {
+				if (((Gyroscope.x.raw + offset) >= diagonal.raw) && (Gyroscope.x.raw - offset <= diagonal.raw)) {
+					return diagonal.raw;
+				}
+			}
+		} else {
+			foreach (Degrees diagonal in Gyroscope.diagonals) {
+				if (Gyroscope.x % diagonal) {
+					return diagonal.raw;
+				}
+			}
+		}
+		return null;
+	}
+
 	public static bool isLifted() => Gyroscope.z.raw > 300 && Gyroscope.z.raw < 358;
 
 	public static void NOP() {

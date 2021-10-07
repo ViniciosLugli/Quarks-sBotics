@@ -3,22 +3,44 @@ public struct Color {
 		this.r = r_;
 		this.g = g_;
 		this.b = b_;
+
+		this.pR = 0;
+		this.pG = 0;
+		this.pB = 0;
 	}
 
 	public float r;
 	public float g;
 	public float b;
 
+	private byte pR;
+	private byte pG;
+	private byte pB;
+
 	public float[] raw {
 		get => new float[] { this.r, this.g, this.b };
 	}
 
-	public bool hasGreen() {
+	private void updatePorcentRGB() {
 		float rgb = this.r + this.g + this.b;
-		byte pR = (byte)Calc.map(this.r, 0, rgb, 0, 100);
-		byte pG = (byte)Calc.map(this.g, 0, rgb, 0, 100);
-		byte pB = (byte)Calc.map(this.b, 0, rgb, 0, 100);
-		return ((pG > pR) && (pG > pB) && (pG > 65));
+		this.pR = (byte)Calc.map(this.r, 0, rgb, 0, 100);
+		this.pG = (byte)Calc.map(this.g, 0, rgb, 0, 100);
+		this.pB = (byte)Calc.map(this.b, 0, rgb, 0, 100);
+	}
+
+	public string showPorcentRGB() {
+		this.updatePorcentRGB();
+		return $"R: {this.pR} | G: {this.pG} | B: {this.pB}";
+	}
+
+	public bool hasGreen() {
+		this.updatePorcentRGB();
+		return ((this.pG > this.pR) && (this.pG > this.pB) && (this.pG > 65));
+	}
+
+	public bool hasKit() {
+		this.updatePorcentRGB();
+		return ((this.pR < 20) && (this.pB > this.pR) && (this.pB > this.pG) && (this.pB > 40));
 	}
 
 	public string toHex() {

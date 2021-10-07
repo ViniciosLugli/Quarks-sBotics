@@ -14,7 +14,7 @@ public class RescueBrain {
 		Time.resetTimer();
 		while (Time.timer.millis < maxTime) {
 			Servo.antiLifting();
-			Servo.foward(200);
+			Servo.forward(200);
 			if (uRight.distance.raw > RESCUE_SIZE) {
 				rescue.setExit(exitIndex);
 				callback?.Invoke();
@@ -140,7 +140,7 @@ public class RescueBrain {
 		private void exitMain() {
 			while (true) {
 				if ((s1.rgb.g > (s1.rgb.r + 5)) && (s1.rgb.g > (s1.rgb.b + 5))) {
-					Servo.foward(150);
+					Servo.forward(150);
 					while ((s1.rgb.g > (s1.rgb.r + 5)) && (s1.rgb.g > (s1.rgb.b + 5))) { }
 					Servo.stop();
 					Servo.encoder(2);
@@ -172,21 +172,21 @@ public class RescueBrain {
 			if (this.tBrain.rescue.exit == 3) {
 				Servo.ultraGoTo(43, ref uFrontal, null, 300);
 				Servo.nextAngleLeft(30);
-				Servo.foward(200);
+				Servo.forward(200);
 				this.exitMain();
 			} else if (this.tBrain.rescue.exit == 2) {
 				Servo.ultraGoTo(43, ref uFrontal, null, 300);
 				Servo.nextAngleRight(30);
 				Servo.ultraGoTo(43, ref uFrontal, null, 300);
 				Servo.nextAngleLeft(30);
-				Servo.foward(200);
+				Servo.forward(200);
 				this.exitMain();
 			} else if (this.tBrain.rescue.exit == 1) {
 				Servo.rotate(180);
 				Servo.alignNextAngle();
 				Servo.ultraGoTo(43, ref uFrontal, null, 300);
 				Servo.nextAngleLeft(30);
-				Servo.foward(200);
+				Servo.forward(200);
 				this.exitMain();
 			}
 		}
@@ -282,7 +282,7 @@ public class RescueBrain {
 			Distance saveDist = uFrontal.distance;
 			for (int rotation = 0; rotation < cRotations; rotation++) {
 				Log.info(Formatter.parse($"cRotations: {cRotations}, currentFor: {rotation}", new string[] { "i", "color=#A9DC76" }));
-				Servo.foward(150);
+				Servo.forward(150);
 				Time.sleep(48);
 				lastRotations = rotation;
 				if (Actuator.victim) {
@@ -320,7 +320,7 @@ public class RescueBrain {
 			if (!this.capture(realDist)) { return; }
 			this.alignRescue();
 			Log.proc();
-			Servo.foward(200);
+			Servo.forward(200);
 			Time.sleep(192);
 			Time.resetTimer();
 			while (Servo.speed() > 0.2f || Time.timer.millis <= 512) {
@@ -334,14 +334,14 @@ public class RescueBrain {
 			for (int i = 0; i < 2; i++) {
 				Servo.backward();
 				Time.sleep(128);
-				Servo.foward();
+				Servo.forward();
 				Time.sleep(128);
 			}
 			if (Actuator.victim) {
 				for (int i = 0; i < 2; i++) {
 					Servo.backward();
 					Time.sleep(128);
-					Servo.foward();
+					Servo.forward();
 					Time.sleep(128);
 				}
 			}

@@ -32,10 +32,10 @@ static DegreesRange upRamp = new DegreesRange(330, 355);
 static DegreesRange downRamp = new DegreesRange(5, 30);
 static DegreesRange floor = new DegreesRange(355, 5);
 
-static Reflective s1 = new Reflective(1), s2 = new Reflective(0);
+static Reflective s1 = new Reflective(1), s2 = new Reflective(0), s3 = new Reflective(2);
 static Ultrassonic uFrontal = new Ultrassonic(0), uRight = new Ultrassonic(1);
 
-static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, 180);
+static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, 190);
 static FloorRoute.Obstacle mainObstacle = new FloorRoute.Obstacle(ref uFrontal, 26);
 static RescueRoute mainRescue = new RescueRoute(ref s1, ref s2, 180);
 
@@ -45,58 +45,7 @@ static RescueRoute mainRescue = new RescueRoute(ref s1, ref s2, 180);
 
 #if (false) //DEBUG MODE MAIN ------------------------------------
 
-////Setup debug program
-//void setup() {
-//	AI.Analyzer.setup();
-//}
-
-////Main loop debug
-//void loop() {
-//	var tempResult = AI.Trainner.reflectives(0);
-//	INPUT.Add(tempResult.input);
-//	OUTPUT.Add(tempResult.output);
-//	Time.sleep(48);
-//}
-
-//string parseArray1D(double[][] arr) {
-//	var s = new System.Text.StringBuilder();
-//	foreach (var info in arr) {
-//		s.Append("{");
-//		foreach (var item in info) {
-//			s.Append($"{item.ToString().Replace(',', '.')}, ");
-//		}
-//		s.Remove(s.Length - 2, 2);
-//		s.Append("}, ");
-//	}
-//	s.Remove(s.Length - 2, 2);
-//	return s.ToString();
-//}
-
-//void Main() {
-//	setup();
-
-//AI.Controller.train(
-//	new double[,] {
-//		import("Variables/input_train")
-//	},
-//	new double[,] {
-//		import("Variables/output_train")
-//	},
-//	new double[,] { { 0, 0, 1 } },
-//	5000
-//);
-
-
-//	for (int i = 0; i <= 512; i++) {
-//		Log.debug(i);
-//		loop();
-//	}
-
-//	AI.Result.export(parseArray1D(INPUT.ToArray()), "input_train");
-//	AI.Result.export("{" + String.Join(", ", OUTPUT.ToArray()) + "}", "output_train");
-//}
-
-void Main() {
+void testRefreshRate() {
 	long currentTime = Time.currentUnparsed;
 	float pval = s1.light.raw;
 	float after = s1.light.raw;
@@ -110,11 +59,24 @@ void Main() {
 	Time.sleep(16);
 }
 
+void showPorcentRGB() {
+	Log.info($"s3: {s3.rgb.showPorcentRGB()}");
+}
+
+void Main() {
+	Buzzer.play(sMultiplesCross);
+	for (; ; ) {
+		//showPorcentRGB();
+	}
+}
+
 #else //DEFAULT MAIN ------------------------------------------------------------------------------------
 
 //Setup program
 void setup() {
-	Actuator.alignUp();
+	//Actuator.alignUp();
+	bc.ActuatorSpeed(150);
+	bc.ActuatorUp(600);
 	Time.resetTimer();
 }
 

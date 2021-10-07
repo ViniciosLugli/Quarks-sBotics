@@ -5,21 +5,26 @@ public static class CrossPath {
 	}
 
 	public static void findLineLeft(FloorRoute.FollowLine Follower) {
+		Log.clear();
+		Log.info(Formatter.parse($"Align to left", new string[] { "i", "color=#505050" }));
 		CrossPath.findLineBase(Follower, new ActionHandler[] { () => Servo.left(), () => Servo.right(), () => Servo.nextAngleLeft(10) }, -90);
 	}
 
 	public static void findLineRight(FloorRoute.FollowLine Follower) {
+		Log.clear();
+		Log.info(Formatter.parse($"Align to right", new string[] { "i", "color=#505050" }));
 		CrossPath.findLineBase(Follower, new ActionHandler[] { () => Servo.right(), () => Servo.left(), () => Servo.nextAngleRight(10) }, 90);
 	}
 
 	private static void findLineBase(FloorRoute.FollowLine Follower, ActionHandler[] turnsCallback, float maxDegrees) {
-		if ((Follower.lastCrossPath.millis + 256) > Time.current.millis) { Buzzer.play(sMultiplesCross); return; }
+		// FIXME: Remake
+		//if ((Follower.lastCrossPath.millis + 256) > Time.current.millis) { Buzzer.play(sMultiplesCross); return; }
+
 		CrossPath.notify();
-		Log.clear();
 		Log.proc();
 		Degrees max = new Degrees(Gyroscope.x.raw + maxDegrees);
 		Servo.encoder(7f);
-		Servo.rotate(-(maxDegrees / 9));
+		//Servo.rotate(-(maxDegrees / 9)); // Check line before turn, inveted axis!
 		turnsCallback[0]();
 		while (true) {
 			if (CrossPath.checkLine(Follower)) { Follower.lastCrossPath = Time.current; Time.resetTimer(); return; }
@@ -60,13 +65,13 @@ public static class CrossPath {
 	}
 
 	public static bool checkLine(FloorRoute.FollowLine Follower) {
-		if (Follower.s1.light.raw < 55 && !Follower.s1.isColored() && !Follower.s1.isMat()) {
+		if (Follower.s1.light.raw < 55 && !Follower.s1.isMat()) {
 			Servo.stop();
 			Buzzer.play(sFindLine);
 			Servo.rotate(-2f);
 			return true;
 		}
-		if (Follower.s2.light.raw < 55 && !Follower.s2.isColored() && !Follower.s2.isMat()) {
+		if (Follower.s2.light.raw < 55 && !Follower.s2.isMat()) {
 			Servo.stop();
 			Buzzer.play(sFindLine);
 			Servo.rotate(2f);
@@ -75,5 +80,5 @@ public static class CrossPath {
 		return false;
 	}
 
-	public static bool verify(Reflective tsensor) => tsensor.light.raw < 45 && !tsensor.isMat() && !tsensor.isColored();
+	public static bool verify(Reflective tsensor) => tsensor.light.raw < 50 && !tsensor.isMat();
 }

@@ -1,13 +1,17 @@
+import("Base/Structs/direction.cs");
+
 public static class Servo {
+	public static void move(Direction direction) => bc.Move(direction.left, direction.right);
 	public static void move(float left = 300, float right = 300) => bc.Move(left, right);
 
-	public static void foward(float velocity = 300) => bc.Move(Math.Abs(velocity), Math.Abs(velocity));
+	public static void forward(float velocity = 300) => bc.Move(Math.Abs(velocity), Math.Abs(velocity));
 
 	public static void backward(float velocity = 300) => bc.Move(-velocity, -velocity);
 
 	public static void left(float velocity = 1000) => bc.Move(-velocity, +velocity);
 
 	public static void right(float velocity = 1000) => bc.Move(+velocity, -velocity);
+
 
 	public static void rotate(float angle, float velocity = 500) => bc.MoveFrontalAngles(velocity, angle);
 	public static void rotate(Degrees angle, float velocity = 500) => bc.MoveFrontalAngles(velocity, angle.raw);
@@ -112,6 +116,65 @@ public static class Servo {
 		Servo.stop();
 	}
 
+	public static bool SmoothAlignNextAngle(FloorRoute.FollowLine Follower) {
+
+		if (Gyroscope.inPoint(true, 1) || Gyroscope.inDiagonal(true, 1)) { return false; }
+
+		Degrees alignLocal = new Degrees(0);
+
+		float? temp = Gyroscope.inRawPoint(true, 22);
+
+		if (temp is null) {
+			temp = Gyroscope.inRawDiagonal(true, 10);
+			if (temp is null) {
+				return false;
+			}
+		}
+		alignLocal = new Degrees((float)temp);
+
+		float diffDegrees = Math.Abs(alignLocal.raw - Gyroscope.x.raw);
+
+		Log.debug(Formatter.parse($"Smooth to {alignLocal.raw}° | Diff: {diffDegrees}°", new string[] { "i", "color=#505050" }));
+
+		diffDegrees = diffDegrees * cDegreesMovementProp;
+
+		void leftMove() {
+			Direction filtred = cLeftMovement;
+			if (diffDegrees > 16) {
+				filtred.right = (int)(filtred.right - 60);
+				filtred.left = (int)(filtred.left);
+			} else {
+				filtred.right = (int)(filtred.right - diffDegrees);
+			}
+			Follower.moveVelocity = filtred;
+		}
+
+		void rightMove() {
+			Direction filtred = cRightMovement;
+			if (diffDegrees > 16) {
+				filtred.left = (int)(filtred.left - 60);
+				filtred.right = (int)(filtred.right);
+			} else {
+				filtred.left = (int)(filtred.left - diffDegrees);
+			}
+			Follower.moveVelocity = filtred;
+		}
+
+		if ((alignLocal.raw == 0) && (Gyroscope.x.raw > 180)) {
+			leftMove();
+		} else if ((alignLocal.raw == 0) && (Gyroscope.x.raw < 180)) {
+			rightMove();
+		} else if (Gyroscope.x < alignLocal) {
+			leftMove();
+		} else if (Gyroscope.x > alignLocal) {
+			rightMove();
+		} else {
+			Log.proc();
+			Log.info(Formatter.parse("Oh fuck 2", new string[] { "i", "color=#505050" }));
+		}
+		return true;
+	}
+
 	private static bool ultraGoToRecursive(Ultrassonic ultra, ActionHandler callback) {
 		Log.info(Formatter.parse($"ultra: {ultra.distance.raw}, speed: {Servo.speed()}", new string[] { "i", "color=#505050" }));
 		Servo.antiLifting();
@@ -133,7 +196,7 @@ public static class Servo {
 		} else {
 			while (position < ultra.distance.raw) {
 				if (ultraGoToRecursive(ultra, callback)) { break; }
-				Servo.foward(velocity);
+				Servo.forward(velocity);
 			}
 		}
 		Servo.stop();
@@ -151,7 +214,7 @@ public static class Servo {
 		} else {
 			while (dist < ultra.distance) {
 				if (ultraGoToRecursive(ultra, callback)) { break; }
-				Servo.foward(velocity);
+				Servo.forward(velocity);
 			}
 		}
 		Servo.stop();
