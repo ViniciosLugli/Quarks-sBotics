@@ -17,14 +17,12 @@ public static class CrossPath {
 	}
 
 	private static void findLineBase(FloorRoute.FollowLine Follower, ActionHandler[] turnsCallback, float maxDegrees) {
-		// FIXME: Remake
 		//if ((Follower.lastCrossPath.millis + 256) > Time.current.millis) { Buzzer.play(sMultiplesCross); return; }
-
 		CrossPath.notify();
 		Log.proc();
 		Degrees max = new Degrees(Gyroscope.x.raw + maxDegrees);
 		Servo.encoder(7f);
-		//Servo.rotate(-(maxDegrees / 9)); // Check line before turn, inveted axis!
+		Servo.rotate(-(maxDegrees / 27)); // Check line before turn, inveted axis!
 		turnsCallback[0]();
 		while (true) {
 			if (CrossPath.checkLine(Follower)) { Follower.lastCrossPath = Time.current; Time.resetTimer(); return; }
@@ -65,16 +63,18 @@ public static class CrossPath {
 	}
 
 	public static bool checkLine(FloorRoute.FollowLine Follower) {
-		if (Follower.s1.light.raw < 55 && !Follower.s1.isMat()) {
+		if (Follower.s1.light.raw < 52 && !Follower.s1.isMat()) {
 			Servo.stop();
+			Follower.checkEndLine();
 			Buzzer.play(sFindLine);
-			Servo.rotate(-2f);
+			Servo.rotate(-4.5f);
 			return true;
 		}
-		if (Follower.s2.light.raw < 55 && !Follower.s2.isMat()) {
+		if (Follower.s2.light.raw < 52 && !Follower.s2.isMat()) {
 			Servo.stop();
+			Follower.checkEndLine();
 			Buzzer.play(sFindLine);
-			Servo.rotate(2f);
+			Servo.rotate(4.5f);
 			return true;
 		}
 		return false;

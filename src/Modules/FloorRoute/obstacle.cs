@@ -7,14 +7,40 @@ public class Obstacle {
 	private Ultrassonic uObs;
 	private byte distance;
 
-	public void verify() {
+	public bool verify(FloorRoute.FollowLine Follower) {
 		if (uObs.distance.raw > 16 && uObs.distance.raw < this.distance && Time.current.millis > 1500) {
-			this.dodge();
-			this.verify();
+			this.dodge(Follower);
+			this.verify(Follower);
+			return true;
 		}
+		return false;
 	}
 
-	public void dodge() {
+	public void dodge(FloorRoute.FollowLine Follower) {
+
+		void findLineAfterDodge(ActionHandler direction, ActionHandler fix, int maxDegrees) {
+			Degrees defaultAxis = Gyroscope.x;
+
+			Degrees max = new Degrees(defaultAxis.raw + maxDegrees);
+
+			bool findLineBase(Degrees degrees) {
+				while (!(Gyroscope.x % degrees)) {
+					if (CrossPath.checkLine(Follower)) {
+						Servo.stop();
+						return true;
+					}
+				}
+				Servo.stop();
+				return false;
+			}
+
+
+			direction();
+			if (!findLineBase(max)) {
+				fix();
+			}
+		}
+
 		// Find line left
 		Servo.stop();
 		Servo.alignNextAngle();
@@ -29,10 +55,7 @@ public class Obstacle {
 				Servo.encoder(9);
 				Servo.rotate(-10);
 				Servo.encoder(7);
-				Servo.nextAngleLeft(10);
-				Servo.backward(300);
-				Time.sleep(128);
-				Servo.stop();
+				findLineAfterDodge(() => Servo.left(), () => Servo.nextAngleRight(15), -70);
 				return;
 			}
 		}
@@ -52,10 +75,7 @@ public class Obstacle {
 				Servo.encoder(9);
 				Servo.rotate(10);
 				Servo.encoder(7);
-				Servo.nextAngleRight(10);
-				Servo.backward(300);
-				Time.sleep(128);
-				Servo.stop();
+				findLineAfterDodge(() => Servo.right(), () => Servo.nextAngleLeft(15), 70);
 				return;
 			}
 		}

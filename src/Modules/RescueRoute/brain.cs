@@ -1,357 +1,350 @@
+
 public class RescueBrain {
+
+	public VictimsAnnihilator victimsAnnihilator;
+	public Degrees defaultEnterDegrees;
+	public bool currentSide;
+
+	public ActionHandler[] actionMove = new ActionHandler[6];
+
 	public RescueBrain() {
 		victimsAnnihilator = new VictimsAnnihilator(this);
 	}
 
-	public VictimsAnnihilator victimsAnnihilator;
-	public Degrees defaultEnterDegrees;
+	private void findExit() {
 
-	private const short RESCUE_SIZE = 300;
-	private RescueInfo rescue = new RescueInfo();
+	}
 
-	private void findExit(sbyte exitIndex, int maxTime = 600, ActionHandler callback = null) {
+	void checkEnterSideAndAlign() {
 		Log.proc();
-		Time.resetTimer();
-		while (Time.timer.millis < maxTime) {
-			Servo.antiLifting();
-			Servo.forward(200);
-			if (uRight.distance.raw > RESCUE_SIZE) {
-				rescue.setExit(exitIndex);
-				callback?.Invoke();
-
+		if (uFrontal.distance.raw > 375) {
+			Servo.encoder(10);
+			Distance saveRight = uRight.distance;
+			Servo.encoder(-10);
+			Servo.nextAngleLeft(50);
+			if (uFrontal.distance.raw < 260 && saveRight.raw < 65) {
+				this.currentSide = false;
+			} else {
+				this.currentSide = true;
 			}
-			Log.info(Formatter.parse($"uRight: {uRight.distance.raw}, speed: {Servo.speed()}, time: {maxTime - Time.timer.millis}", new string[] { "i", "color=#505050" }));
-			Log.debug($"FINDING EXIT {exitIndex}");
+		} else {
+			if (uFrontal.distance.raw < 260) {
+				this.currentSide = true;
+			} else {
+				this.currentSide = false;
+			}
+			Servo.nextAngleLeft(50);
 		}
-		Servo.stop();
-		Log.clear();
+
+		Log.info($"this.currentSide: {this.currentSide}");
+	}
+
+	private bool isWall() => uFrontal.distance.raw < 25 || (s1.isRescueExit() || s2.isRescueExit()) || (s1.isRescueEnter() || s2.isRescueEnter());
+
+	private sbyte isWallBack() {
+		if (bBack.state.pressed) {
+			return 1;
+		} else if ((s1.isRescueExit() || s2.isRescueExit()) || (s1.isRescueEnter() || s2.isRescueEnter())) {
+			return -1;
+		}
+		return 0;
+	}
+
+	public void rescueRescueKit() {
+		if (Actuator.kit) {
+			Servo.rotate(45);
+			Servo.encoder(22);
+			Servo.rotate(-90);
+			victimsAnnihilator.rescueDefault();
+			Servo.rotate(90);
+			if (!this.currentSide) {
+				Servo.forward();
+				while (!this.isWall()) { }
+				Servo.encoder(-6);
+				Servo.rotate(45);
+			} else {
+				Servo.encoder(-20);
+				Servo.rotate(-45);
+			}
+		} else {
+			if (!this.currentSide) {
+				Servo.rotate(45);
+				Servo.forward();
+				while (!this.isWall()) { }
+				Servo.encoder(-6);
+				Servo.rotate(45);
+			}
+		}
+	}
+
+	private void setupMoveActions() {
+		if (uFrontal.distance.raw > 120) {
+			this.actionMove[0] = () => Servo.forward();
+			this.actionMove[1] = () => Servo.backward();
+			this.actionMove[2] = () => Servo.nextAngleRight(80);
+			this.actionMove[3] = () => Servo.nextAngleLeft(170);
+			this.actionMove[4] = () => Servo.rotate(-45);
+			this.actionMove[5] = () => Servo.rotate(-135);
+		} else {
+			this.actionMove[0] = () => Servo.backward();
+			this.actionMove[1] = () => Servo.forward();
+			this.actionMove[2] = () => Servo.nextAngleLeft(80);
+			this.actionMove[3] = () => { };
+			this.actionMove[4] = () => Servo.rotate(45);
+			this.actionMove[5] = () => Servo.rotate(-45);
+		}
 	}
 
 	public void findTriangleArea() {
-		findExit(1);
-		Log.debug("FINDING TRIANGLE 3");
-		Servo.ultraGoTo(40, ref uFrontal, () => {
-			if (this.rescue.setTriangle(3) && this.rescue.exit == 0) {
-				this.rescue.setExit(2);
+		Log.proc();
+		this.checkEnterSideAndAlign();
+		Log.debug("Finding triangle");
+		while (!s3.isTriangle()) {
+			Servo.forward();
+			if (this.isWall()) {
+				Log.debug("Wall finded");
+				Servo.encoder(-2);
+				Servo.nextAngleRight(50);
+				this.currentSide = !this.currentSide;
+				Log.info($"this.currentSide: {this.currentSide}");
+				Log.debug("Finding triangle");
 			}
-		});
-
-		Log.clear();
-		if (this.rescue.exit == 1) {
-			this.rescue.setTriangle(2);
 		}
+		Log.debug("Tringle founded!");
 
-		if (!this.rescue.hasInfos()) {
-			Servo.alignNextAngle();
-			Servo.rotate(-180);
-			Servo.alignNextAngle();
-			findExit(3, 500);
-			Servo.backward(200);
-			Time.sleep(500);
-			Servo.stop();
-			if (this.rescue.setExit(2)) {
-				this.rescue.setTriangle(1);
-			}
-			if (this.rescue.triangle == 0) {
-				Servo.rotate(-90);
-				Servo.alignNextAngle();
-				Log.debug("FINDING TRIANGLE 2");
-				Servo.ultraGoTo(40, ref uFrontal, () => {
-					this.rescue.setTriangle(2);
-				});
-				Log.clear();
-			}
-			if (this.rescue.triangle == 0) {
-				this.rescue.setTriangle(1);
-			}
-		} else {
-			Log.info($"Triangle: {this.rescue.triangle}, Exit: {this.rescue.exit}");
-			Log.debug("HAS INFOS!");
-		}
-		Servo.alignNextAngle();
+		this.rescueRescueKit();
+
+		this.setupMoveActions();
 	}
 
-	public void goToCenter() {
-		Servo.ultraGoTo((300 / 2) - (Robot.kDiffFrontalDistance * Robot.kErrorDelta), ref uFrontal, null, 300);
-		Servo.nextAngleLeft(50);
-		Servo.ultraGoTo((300 / 2) - (Robot.kDiffFrontalDistance * Robot.kErrorDelta), ref uFrontal, null, 300);
-	}
 
 	public class VictimsAnnihilator {
-		public Distance distThreshold;
-		public float counterThreshold;
 
-		private RescueRoute.RescueBrain tBrain;
-		private byte verifyCounter = 0;
-		private List<float> verifyOccurrences = new List<float>();
-		private Degrees lastPoint;
-		private byte totalRotates = 0;
-		private bool canCompleteRotate = true;
+		byte rescuedVictims = 0;
 
-		public VictimsAnnihilator(RescueRoute.RescueBrain tBrainInstance, float defaultDist = 130f, float defaultCounter = 3.4f) {
-			this.distThreshold = new Distance(defaultDist);
-			this.counterThreshold = defaultCounter;
-			this.tBrain = tBrainInstance;
-		}
+		RescueRoute.RescueBrain brain;
 
-		private bool checkDiagonal(int angle = 25) {
-			float localDegrees = Calc.toBearing(Gyroscope.x.raw + 90 - this.tBrain.defaultEnterDegrees.raw);
-			if (this.tBrain.rescue.triangle == 1) {
-				return localDegrees > (135 - angle) && localDegrees < (135 + angle);
-			} else if (this.tBrain.rescue.triangle == 2) {
-				return localDegrees > (45 - angle) && localDegrees < (45 + angle);
-			} else if (this.tBrain.rescue.triangle == 3) {
-				return localDegrees > (315 - angle) && localDegrees < (315 + angle);
-			}
-			return false;
-		}
-
-		private bool checkVerifyP(Distance cDistance, byte serial) {
-			if (this.verifyCounter >= serial) {
-				if (this.checkDiagonal()) {
-					if (this.verifyOccurrences.Count == 0) {
-						return true;
-					}
-					this.verifyOccurrences.Sort();
-					float[] occurrences = this.verifyOccurrences.ToArray();
-					try {
-						float first = this.verifyOccurrences[1];
-						float last = this.verifyOccurrences[occurrences.Length - 1];
-
-						if (Math.Abs(first - last) <= 3) {
-							Log.debug($"Math.Abs(first - last): {Math.Abs(first - last)}");
-							return true;
-						}
-					} finally {
-						Led.on(255, 255, 0);
-					}
-				} else {
-					return true;
-				}
-			}
-			return false;
-		}
-
-		private void resetInstances() {
-			this.verifyCounter = 0;
-			this.verifyOccurrences.Clear();
+		public VictimsAnnihilator(RescueRoute.RescueBrain _brain) {
+			this.brain = _brain;
 		}
 
 		private void exitMain() {
-			while (true) {
-				if ((s1.rgb.g > (s1.rgb.r + 5)) && (s1.rgb.g > (s1.rgb.b + 5))) {
-					Servo.forward(150);
-					while ((s1.rgb.g > (s1.rgb.r + 5)) && (s1.rgb.g > (s1.rgb.b + 5))) { }
-					Servo.stop();
-					Servo.encoder(2);
-					while (true) {
-						if ((s1.isMat() && s1.isColored() && s1.rgb.b < 24 && s1.rgb.g < 24) ||
-							(s2.isMat() && s2.isColored() && s2.rgb.b < 24 && s2.rgb.g < 24)) {
-							Servo.stop();
-							Servo.encoder(2);
-							if ((s1.isMat() && s1.isColored() && s1.rgb.b < 24 && s1.rgb.g < 24) ||
-								(s2.isMat() && s2.isColored() && s2.rgb.b < 24 && s2.rgb.g < 24)) {
-								Servo.stop();
-								Servo.encoder(7);
-								Log.clear();
-								Led.on(255, 0, 0);
-								Log.debug("AEEEEEEEEEEEEEEEEEEE PORRA");
-								Time.debug();
-							}
-							Servo.encoder(-2);
-						}
-						mainFollow.proc();
-						mainObstacle.verify();
-					}
-				}
-			}
 		}
 
-		private void exitGoGoGo() {
-			Servo.alignToAngle(this.tBrain.defaultEnterDegrees);
-			if (this.tBrain.rescue.exit == 3) {
-				Servo.ultraGoTo(43, ref uFrontal, null, 300);
-				Servo.nextAngleLeft(30);
-				Servo.forward(200);
-				this.exitMain();
-			} else if (this.tBrain.rescue.exit == 2) {
-				Servo.ultraGoTo(43, ref uFrontal, null, 300);
-				Servo.nextAngleRight(30);
-				Servo.ultraGoTo(43, ref uFrontal, null, 300);
-				Servo.nextAngleLeft(30);
-				Servo.forward(200);
-				this.exitMain();
-			} else if (this.tBrain.rescue.exit == 1) {
-				Servo.rotate(180);
-				Servo.alignNextAngle();
-				Servo.ultraGoTo(43, ref uFrontal, null, 300);
-				Servo.nextAngleLeft(30);
-				Servo.forward(200);
-				this.exitMain();
+		public void find() {
+			Log.debug($"Finding victim... rescuedVictims: {this.rescuedVictims}");
+			Servo.alignNextAngle();
+			this.brain.actionMove[0]();
+			float currentDistance = uRight.distance.raw;
+			while (true) {
+				currentDistance = uRight.distance.raw;
+				if (currentDistance < 230) {
+					if (currentDistance < 45) {
+						Servo.encoder(12, 150);
+						Servo.encoder(-12);
+					}
+					Servo.stop();
+					break;
+				}
 			}
+			this.captureRight(currentDistance);
 		}
 
-		public Distance[] find() {
-			Distance localDistance = uFrontal.distance;
-			Distance localDistThreshold = this.distThreshold;
-			byte serial = 255;
-			this.resetInstances();
+		private bool captureRight(float distance) {
+			Servo.rotate(90);
+			Servo.alignNextAngle();
+			Actuator.open();
+			Actuator.alignDown();
+			Servo.forward(200);
+			Time.resetTimer();
+			int beforeDelay = 0;
 			while (true) {
-				Servo.right();
-
-				localDistance = uRight.distance;
-				serial = (byte)(((this.distThreshold - localDistance) + (Robot.kDiffFrontalDistance / 2)) / this.counterThreshold);
-
-				Log.info(Formatter.parse($"FINDING VICTIM", new string[] { "i", "color=#78DCE8" }));
-				Log.debug(Formatter.parse($"uRight: {localDistance.raw}, verifyCounter: {this.verifyCounter}, serial: {serial}", new string[] { "i", "color=#505050" }));
-
-				if (this.checkDiagonal(8 - this.totalRotates) && this.canCompleteRotate) {
-					this.canCompleteRotate = false;
-					this.totalRotates++;
-					Buzzer.play(sMultiplesCross);
-				} else if (!this.checkDiagonal(16)) {
-					this.canCompleteRotate = true;
+				Log.debug($"Actuator.victim: {bc.HasVictim()}, Servo.speed: {Servo.speed()}");
+				if (bc.HasVictim()) {
+					break;
 				}
-
-				if (totalRotates == 3) {
-					Servo.stop();
-					Log.debug("TO DANDO O FORA DAQUI FODASE");
-					this.exitGoGoGo();
+				if (Servo.speed() < 0.5f && Time.timer.millis > 256) {
+					break;
 				}
-
-
-				if (Gyroscope.inPoint(true, 5)) {
-					localDistThreshold = new Distance(this.distThreshold.raw * 0.95f);
-				} else if (this.checkDiagonal(12)) {
-					localDistThreshold = new Distance(this.distThreshold.raw * 0.940f);
-				} else if (this.checkDiagonal()) {
-					localDistThreshold = new Distance(this.distThreshold.raw * 0.95f);
-				} else if (Gyroscope.inDiagonal(true, 10)) {
-					localDistThreshold = new Distance(this.distThreshold.raw * 1.20f);
-				} else {
-					localDistThreshold = this.distThreshold;
+				if (this.brain.isWall()) {
+					beforeDelay = 2048;
+					break;
 				}
-
-				if ((localDistance <= localDistThreshold)) {
-					this.verifyCounter++;
-					this.verifyOccurrences.Add(localDistance.raw);
-					if (this.checkVerifyP(localDistance, serial)) {
-						this.lastPoint = new Degrees(Gyroscope.x.raw + 6);
-						Led.on(0, 255, 0);
-						this.resetInstances();
-						break;
-					}
-				} else {
-					this.resetInstances();
-					Led.on(255, 0, 0);
-				}
-
-				//if(Gyroscope.inPoint(true, 2) && Time.timer.millis > 328){
-				//	Servo.ultraGoTo((300 / 2) - ((Robot.kDiffFrontalDistance * Robot.kErrorDelta) / 3), ref uFrontal, null, 300);
-				//	Time.resetTimer();
-				//}
-
-				Time.sleep(16);
+				Time.sleep(32);
 			}
+			Actuator.close();
+			Actuator.angle(0);
+			Actuator.position(45);
 			Servo.stop();
-			Log.clear();
-			Log.info(Formatter.parse($"FINDED VICTIM", new string[] { "i", "color=#A9DC76" }));
-			Log.debug(Formatter.parse($"uRight: {localDistance.raw}, verifyCounter: {this.verifyCounter}, serial: {serial}", new string[] { "i", "color=#505050" }));
-			Buzzer.play(sTurnGreen);
-			return new Distance[] { new Distance(this.distThreshold - localDistance), localDistance };
+			Actuator.position(88);
+			sbyte tempWallRead;
+			Servo.backward();
+			Time.sleep(beforeDelay);
+			Time.resetTimer();
+			while (true) {
+				tempWallRead = this.brain.isWallBack();
+				if ((tempWallRead == 1) || (Servo.speed() < 0.5f && Time.timer.millis > 256)) {
+					Servo.encoder(8);
+					break;
+				} else if (tempWallRead == -1) {
+					Servo.encoder(26);
+					break;
+				}
+			}
+			if (Actuator.victim) {
+				if (Temperature.victimAlive || this.rescuedVictims == 2) {
+					Log.debug("Live victim or dead can be rescue");
+					this.brain.actionMove[2]();
+
+					rescueFast();
+					this.rescuedVictims++;
+					if (this.rescuedVictims == 3) {
+						Servo.stop();
+						Log.clear();
+						this.exitMain();
+					} else if (this.rescuedVictims == 2) {
+						Servo.stop();
+						Log.clear();
+
+						if (uRight.distance.raw > 50) {
+							this.brain.actionMove[4]();
+							Actuator.open();
+							Actuator.alignDown();
+							beforeDelay = 0;
+							Servo.forward(180);
+							while (true) {
+								Log.debug($"Actuator.victim: {bc.HasVictim()}, Servo.speed: {Servo.speed()}");
+								if (bc.HasVictim()) {
+									break;
+								}
+								if (Servo.speed() < 0.5f && Time.timer.millis > 256) {
+									break;
+								}
+								if (this.brain.isWall()) {
+									beforeDelay = 1024;
+									break;
+								}
+								Time.sleep(32);
+							}
+							Actuator.close();
+							Actuator.angle(0);
+							Actuator.position(45);
+							Servo.stop();
+							Actuator.position(88); ;
+							Servo.rotate(-4);
+							Servo.rotate(-90);
+							this.rescueDefault();
+						} else {
+							this.brain.actionMove[4]();
+							Actuator.open();
+							Actuator.alignDown();
+							beforeDelay = 0;
+							Servo.forward(180);
+							while (true) {
+								Log.debug($"Actuator.victim: {bc.HasVictim()}, Servo.speed: {Servo.speed()}");
+								if (bc.HasVictim()) {
+									break;
+								}
+								if (Servo.speed() < 0.5f && Time.timer.millis > 256) {
+									break;
+								}
+								if (this.brain.isWall()) {
+									beforeDelay = 1024;
+									break;
+								}
+								Time.sleep(32);
+							}
+							Actuator.close();
+							Actuator.angle(0);
+							Actuator.position(45);
+							Servo.stop();
+							Actuator.position(88); ;
+							Servo.rotate(-4);
+							Servo.rotate(90);
+							this.rescueDefault();
+						}
+
+						this.exitMain();
+					}
+					this.brain.actionMove[3]();
+
+					return true;
+				} else {
+					Log.debug("Dead victim, go to queue");
+					this.brain.actionMove[2]();
+					Servo.forward();
+					while (!s3.isTriangle()) { }
+					Servo.stop();
+					this.brain.actionMove[4]();
+					Servo.encoder(4, 200);
+					Actuator.alignDown();
+					Servo.encoder(-4, 200);
+					Actuator.alignUp();
+					this.brain.actionMove[5]();
+					return true;
+				}
+			} else {
+				return false;
+			}
+
 		}
 
 		private void alignRescue() {
-			Log.clear();
-			Log.proc();
-			Servo.alignToAngle(new Degrees(this.tBrain.defaultEnterDegrees.raw + this.tBrain.rescue.triangleBaseDegrees()));
+
 		}
 
-		private bool capture(Distance realDist) {
-			Log.proc();
-			float diffBack = 0f;
-			if (realDist.raw <= 50) {
-				diffBack = (50 - realDist.raw) / 3f;
-				Servo.encoder(-diffBack, 200);
+		public void rescueFast() {
+			if (uFrontal.distance.raw < 140) {
+				Servo.encoder(-8);
 			}
-			Actuator.alignDown();
-			Actuator.open();
-			int cRotations = (int)(realDist.toRotations() * 0.95f);
-			int lastRotations = 0;
-			Time.resetTimer();
-			Distance saveDist = uFrontal.distance;
-			for (int rotation = 0; rotation < cRotations; rotation++) {
-				Log.info(Formatter.parse($"cRotations: {cRotations}, currentFor: {rotation}", new string[] { "i", "color=#A9DC76" }));
-				Servo.forward(150);
-				Time.sleep(48);
-				lastRotations = rotation;
-				if (Actuator.victim) {
-					break;
-				} else if (Servo.speed() < 0.5f && Time.timer.millis > 192) {
-					break;
-				}
-			}
+			Servo.forward();
+			Actuator.position(25);
+			while ((Servo.speed() > 0.8f || Time.timer.millis < 256)) { }
+			Time.sleep(312);
+			Servo.backward();
+			Time.sleep(96);
+			Servo.forward();
+			Time.sleep(96);
+			Servo.stop();
 			Time.sleep(128);
-			Clock saveTimeCost = Time.current;
-			Actuator.close();
-			Actuator.alignUp();
-			int timeToReturn = (int)(Time.current - saveTimeCost);
-			Servo.stop();
-			Log.proc();
-			Log.debug(Formatter.parse($"Actuator.victim: {Actuator.victim}", new string[] { "i", "color=#FFEA79" }));
-			Servo.backward(300);
-			Time.resetTimer();
-			while ((saveDist.raw <= 300 && uFrontal.distance < saveDist) ||
-				  (saveDist.raw > 300 && Time.timer.millis < ((int)(((lastRotations * 48) + timeToReturn + 192) * 0.6f)))) { }
-			//Time.sleep((int)(((lastRotations * 48) + timeToReturn + 192) * 0.55f));
-			Servo.stop();
-			if (!Actuator.victim) {
-				Servo.nextAngleRight();
-				this.tBrain.goToCenter();
-				Servo.alignToAngle(this.lastPoint);
-				return false;
+			if (Actuator.victim) {
+				Servo.encoder(-10);
+				Servo.forward();
+				while ((Servo.speed() > 0.8f || Time.timer.millis < 256)) { }
+				Time.sleep(312);
+				Servo.backward();
+				Time.sleep(96);
+				Servo.forward();
+				Time.sleep(96);
+				Servo.stop();
 			}
-			return true;
+
+			Actuator.alignUp();
 		}
 
-		public void rescue(Distance diffDist, Distance realDist) {
-			Log.proc();
-			Servo.rotate((float)((88 + (diffDist.raw / 35))));
-			if (!this.capture(realDist)) { return; }
-			this.alignRescue();
+		public void rescueDefault() {
 			Log.proc();
 			Servo.forward(200);
-			Time.sleep(192);
-			Time.resetTimer();
-			while (Servo.speed() > 0.2f || Time.timer.millis <= 512) {
-				Log.debug(Formatter.parse($"speed: {Servo.speed()}, timer: {Time.timer.millis}", new string[] { "i", "color=#FFEA79" }));
-				Servo.antiLiftingRescue();
-			}
 			Time.sleep(64);
-			Servo.stop();
 			Actuator.open();
 			Actuator.dropVictim();
 			for (int i = 0; i < 2; i++) {
 				Servo.backward();
-				Time.sleep(128);
+				Time.sleep(64);
 				Servo.forward();
-				Time.sleep(128);
+				Time.sleep(64);
 			}
 			if (Actuator.victim) {
 				for (int i = 0; i < 2; i++) {
 					Servo.backward();
-					Time.sleep(128);
+					Time.sleep(64);
 					Servo.forward();
-					Time.sleep(128);
+					Time.sleep(64);
 				}
 			}
 			Servo.stop();
 			Actuator.close();
 			Actuator.alignUp();
-			Servo.encoder(-60);
-			Servo.nextAngleRight();
-			this.tBrain.goToCenter();
-			Servo.alignToAngle(this.lastPoint);
 		}
 	}
 }

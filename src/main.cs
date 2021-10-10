@@ -35,9 +35,11 @@ static DegreesRange floor = new DegreesRange(355, 5);
 static Reflective s1 = new Reflective(1), s2 = new Reflective(0), s3 = new Reflective(2);
 static Ultrassonic uFrontal = new Ultrassonic(0), uRight = new Ultrassonic(1);
 
+static Button bBack = new Button(0);
+
 static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, 190);
 static FloorRoute.Obstacle mainObstacle = new FloorRoute.Obstacle(ref uFrontal, 26);
-static RescueRoute mainRescue = new RescueRoute(ref s1, ref s2, 180);
+static RescueRoute mainRescue = new RescueRoute();
 
 //----------------------------- Main ---------------------------------------//
 //List<double[]> INPUT = new List<double[]>();
@@ -59,13 +61,22 @@ void testRefreshRate() {
 	Time.sleep(16);
 }
 
+
+void testTurnSpeed() {
+	long currentTime = Time.currentUnparsed;
+	Servo.rotate(90);
+	Log.debug($"Time: {Time.currentUnparsed - currentTime}");
+	Time.sleep(16);
+}
+
 void showPorcentRGB() {
 	Log.info($"s3: {s3.rgb.showPorcentRGB()}");
 }
 
 void Main() {
-	Buzzer.play(sMultiplesCross);
+	Servo.backward();
 	for (; ; ) {
+		Log.debug(Servo.speed());
 		//showPorcentRGB();
 	}
 }
@@ -83,13 +94,11 @@ void setup() {
 //Main loop
 void loop() {
 	mainFollow.proc();
-	mainObstacle.verify();
 	mainRescue.verify();
 }
 
 void Main() {
 	setup();
-	mainRescue.check();
 	for (; ; ) {
 		loop();
 	}

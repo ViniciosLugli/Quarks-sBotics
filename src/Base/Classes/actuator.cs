@@ -31,7 +31,7 @@ public static class Actuator {
 		Log.clear();
 		bc.ActuatorSpeed(velocity);
 
-		int timeout = Time.current.millis + (3000 - (velocity * 10));
+		int timeout = Time.current.millis + (2000 - (velocity * 10));
 		float local_angle = bc.AngleScoop();
 
 		degrees = (degrees < 0 || degrees > 300) ? 0 : (degrees > 12) ? 12 : degrees;
@@ -86,7 +86,7 @@ public static class Actuator {
 
 	public static void dropVictim() {
 		position(0);
-		angle(12);
+		angle(10);
 	}
 
 	public static void NOP() {

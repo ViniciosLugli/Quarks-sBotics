@@ -19,13 +19,16 @@ public class FollowLine {
 	public void proc() {
 		Log.proc();
 		this.debugSensors();
+		this.checkEndLine();
+
+		if (mainObstacle.verify(this)) { return; }
 
 		if (Green.verify(this)) { return; }
 
 		if (checkSensor(ref this.s1, () => Servo.left(), () => CrossPath.findLineLeft(this))) {
-
+			return;
 		} else if (checkSensor(ref this.s2, () => Servo.right(), () => CrossPath.findLineRight(this))) {
-
+			return;
 		} else {
 			Servo.move(this.moveVelocity);
 			Security.verify(this);
@@ -33,11 +36,30 @@ public class FollowLine {
 		}
 	}
 
+	public void checkEndLine() {
+		if (this.s1.isEndLine() || this.s2.isEndLine()) {
+			Servo.stop();
+			Servo.encoder(2);
+			if (this.s1.isEndLine() || this.s2.isEndLine()) {
+				Servo.stop();
+				Servo.encoder(7);
+				Log.clear();
+				Led.on(255, 0, 0);
+				Log.custom(0, Formatter.parse($"----------------------------------------", new string[] { "align=center", "color=#FF6188", "b" }));
+				Log.custom(1, Formatter.parse($"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", new string[] { "align=center", "color=#FFEA79", "b" }));
+				Log.custom(2, Formatter.parse($"----------------------------------------", new string[] { "align=center", "color=#FF6188", "b" }));
+				Time.debug();
+			}
+			Servo.encoder(-2);
+		}
+	}
+
 	private bool checkSensor(ref Reflective refsensor_, ActionHandler correctCallback, ActionHandler crossCallback) {
-		if (refsensor_.light.raw < 55 && !refsensor_.isMat()) {
+		if (refsensor_.light.raw < 52 && !refsensor_.isMat()) {
+			Clock timeout = new Clock(Time.current.millis + 128 + 48);
 			correctCallback();
-			Clock timeout = new Clock(Time.current.millis + 128 + 16);
-			while (refsensor_.light.raw < 55) {
+			while (refsensor_.light.raw < 52) {
+				mainRescue.verify();
 				if (Green.verify(this)) { return true; }
 				if (Time.current > timeout) {
 					if (Green.verify(this)) { return true; }
@@ -49,8 +71,10 @@ public class FollowLine {
 				}
 			}
 			Time.sleep(32, () => Green.verify(this));
+			mainRescue.verify();
 			Servo.forward(this.defaultVelocity);
 			Time.sleep(32, () => Green.verify(this));
+			mainRescue.verify();
 			Servo.stop();
 			if (Green.verify(this)) { return true; }
 			if ((this.lastGreen.millis + 320) > Time.current.millis) {

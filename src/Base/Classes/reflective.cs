@@ -20,7 +20,19 @@ public class Reflective {
 	}
 	public bool hasLine() => bc.ReturnRed((int)this.SensorIndex) < 50 && bc.ReturnGreen((int)this.SensorIndex) < 50 && bc.Lightness((int)this.SensorIndex) < 52;
 
-	public bool isMat() => bc.ReturnRed((int)this.SensorIndex) > 50 && bc.ReturnBlue((int)this.SensorIndex) < 20 && bc.ReturnGreen((int)this.SensorIndex) < 20;
+	public bool isMat() => bc.ReturnRed((int)this.SensorIndex) > 45 && bc.ReturnBlue((int)this.SensorIndex) < 20 && bc.ReturnGreen((int)this.SensorIndex) < 20;
+
+	public bool isEndLine() => bc.ReturnRed((int)this.SensorIndex) > 60 && bc.ReturnBlue((int)this.SensorIndex) < 24 && bc.ReturnGreen((int)this.SensorIndex) < 24;
+
+	public bool isRescueEnter() => (bc.ReturnBlue((int)this.SensorIndex) > (bc.ReturnRed((int)this.SensorIndex) + 4)) && (bc.ReturnBlue((int)this.SensorIndex) > (bc.ReturnGreen((int)this.SensorIndex) + 4));
+
+	public bool isRescueExit() => (bc.ReturnGreen((int)this.SensorIndex) > (bc.ReturnRed((int)this.SensorIndex) + 4)) && (bc.ReturnGreen((int)this.SensorIndex) > (bc.ReturnBlue((int)this.SensorIndex) + 4));
+
+	public bool isTriangle() => bc.ReturnRed((int)this.SensorIndex) < 5 && bc.ReturnBlue((int)this.SensorIndex) < 5 && bc.ReturnGreen((int)this.SensorIndex) < 5;
+
+	public bool isLiveVictim() => bc.ReturnRed((int)this.SensorIndex) > 55 && bc.ReturnBlue((int)this.SensorIndex) > 55 && bc.ReturnGreen((int)this.SensorIndex) > 16;
+
+	public bool isDeadVictim() => bc.ReturnRed((int)this.SensorIndex) < 16 && bc.ReturnBlue((int)this.SensorIndex) < 16 && bc.ReturnGreen((int)this.SensorIndex) < 16;
 
 	public bool isColored() {
 		for (int i = 0; i < 4; i++) {

@@ -3,5 +3,9 @@ public struct Action {
 		this.raw = raw_;
 	}
 
+	public bool pressed {
+		get => this.raw;
+	}
+
 	public bool raw;
 }
