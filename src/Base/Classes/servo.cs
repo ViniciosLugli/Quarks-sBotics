@@ -71,6 +71,22 @@ public static class Servo {
 		}
 	}
 
+	public static void nextAngleRightDiagonal(byte ignoreAngles = 0) {
+		Log.proc();
+		Servo.rotate(Math.Abs(ignoreAngles));
+		Servo.right();
+		while (!Gyroscope.inDiagonal(false)) { }
+		Servo.stop();
+	}
+
+	public static void nextAngleLeftDiagonal(byte ignoreAngles = 0) {
+		Log.proc();
+		Servo.rotate(-ignoreAngles);
+		Servo.left();
+		while (!Gyroscope.inDiagonal(false)) { }
+		Servo.stop();
+	}
+
 	public static void nextAngleRight(byte ignoreAngles = 0) {
 		Log.proc();
 		Servo.rotate(Math.Abs(ignoreAngles));

@@ -6,6 +6,7 @@ static private class Security {
 			}
 			return;
 		}
+
 		Follower.resetMovement();
 	}
 

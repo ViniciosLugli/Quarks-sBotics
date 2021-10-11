@@ -38,9 +38,7 @@ public class Green {
 	public static bool verify(FloorRoute.FollowLine Follower) {
 		if (Follower.s1.rgb.hasGreen() || Follower.s2.rgb.hasGreen()) {
 			Follower.alignSensors();
-			Servo.forward();
-			Time.sleep(32);
-			Servo.stop();
+			Servo.encoder(1);
 			if (Follower.s1.rgb.hasGreen() && Follower.s2.rgb.hasGreen()) {
 				Green.findLineBack();
 			} else if (Follower.s1.rgb.hasGreen()) {

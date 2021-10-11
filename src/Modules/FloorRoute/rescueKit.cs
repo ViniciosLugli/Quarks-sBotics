@@ -11,10 +11,15 @@ static private class RescueKit {
 		Time.sleep(700);
 		Servo.forward(80);
 		Actuator.close();
+		Actuator.position(20);
+		Time.sleep(128);
+		Actuator.position(45);
+		Time.sleep(128);
+		Servo.encoder(1);
 		Actuator.alignUp();
 
 		Servo.backward(300);
-		Time.sleep(800);
+		Time.sleep(600);
 		Servo.stop();
 		Servo.alignToAngle(defaultDirection);
 	}
@@ -29,6 +34,7 @@ static private class RescueKit {
 
 		Actuator.open();
 		Actuator.alignDown();
+		Actuator.angle(10);
 
 		int timeout = Time.current.millis + 1000;
 		Servo.forward(165);

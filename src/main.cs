@@ -74,9 +74,8 @@ void showPorcentRGB() {
 }
 
 void Main() {
-	Servo.backward();
+	testTurnSpeed();
 	for (; ; ) {
-		Log.debug(Servo.speed());
 		//showPorcentRGB();
 	}
 }

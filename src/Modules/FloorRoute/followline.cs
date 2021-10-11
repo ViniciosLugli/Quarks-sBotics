@@ -70,10 +70,8 @@ public class FollowLine {
 					break;
 				}
 			}
-			Time.sleep(32, () => Green.verify(this));
-			mainRescue.verify();
 			Servo.forward(this.defaultVelocity);
-			Time.sleep(32, () => Green.verify(this));
+			Time.sleep(32, () => { Green.verify(this); mainRescue.verify(); });
 			mainRescue.verify();
 			Servo.stop();
 			if (Green.verify(this)) { return true; }

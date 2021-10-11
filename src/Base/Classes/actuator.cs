@@ -12,19 +12,20 @@ public static class Actuator {
 
 		if (degrees > local_angle) {
 			while (degrees > local_angle) {
-				bc.ActuatorUp(32);
+				bc.ChangeAngleActuatorUp();
 				if (Time.current.millis > timeout) { return; }
 				local_angle = bc.AngleActuator();
-				Log.info($"local_angle: {local_angle}");
+				//Log.info($"local_angle: {local_angle}");
 			}
 		} else if (degrees < local_angle) {
 			while (degrees < local_angle) {
-				bc.ActuatorDown(32);
+				bc.ChangeAngleActuatorDown();
 				if (Time.current.millis > timeout) { return; }
 				local_angle = bc.AngleActuator();
-				Log.info($"local_angle: {local_angle}");
+				//Log.info($"local_angle: {local_angle}");
 			}
 		}
+		bc.ActuatorUp(1);
 	}
 
 	public static void angle(float degrees, int velocity = 150) {
@@ -40,19 +41,20 @@ public static class Actuator {
 
 		if (degrees > local_angle) {
 			while (degrees > local_angle) {
-				bc.TurnActuatorDown(32);
+				bc.TurnActuatorDown(31);
 				if (Time.current.millis > timeout) { return; }
 				local_angle = bc.AngleScoop();
-				Log.info($"local_angle: {local_angle}");
+				//Log.info($"local_angle: {local_angle}");
 			}
 		} else if (degrees < local_angle) {
 			while (degrees < local_angle) {
-				bc.TurnActuatorUp(32);
+				bc.TurnActuatorUp(31);
 				if (Time.current.millis > timeout) { return; }
 				local_angle = bc.AngleScoop();
-				Log.info($"local_angle: {local_angle}");
+				//Log.info($"local_angle: {local_angle}");
 			}
 		}
+		bc.TurnActuatorUp(1);
 	}
 
 	public static bool victim {
@@ -62,6 +64,8 @@ public static class Actuator {
 	public static bool kit {
 		get => bc.HasRescueKit();
 	}
+
+	public static void setVelocity(int vel) => bc.ActuatorSpeed(vel);
 
 	public static void open() {
 		Log.clear();

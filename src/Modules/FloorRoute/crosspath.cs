@@ -22,7 +22,7 @@ public static class CrossPath {
 		Log.proc();
 		Degrees max = new Degrees(Gyroscope.x.raw + maxDegrees);
 		Servo.encoder(7f);
-		Servo.rotate(-(maxDegrees / 27)); // Check line before turn, inveted axis!
+		Servo.rotate(-(maxDegrees / 15)); // Check line before turn, inveted axis!
 		turnsCallback[0]();
 		while (true) {
 			if (CrossPath.checkLine(Follower)) { Follower.lastCrossPath = Time.current; Time.resetTimer(); return; }
@@ -67,14 +67,14 @@ public static class CrossPath {
 			Servo.stop();
 			Follower.checkEndLine();
 			Buzzer.play(sFindLine);
-			Servo.rotate(-4.5f);
+			Servo.rotate(-5f);
 			return true;
 		}
 		if (Follower.s2.light.raw < 52 && !Follower.s2.isMat()) {
 			Servo.stop();
 			Follower.checkEndLine();
 			Buzzer.play(sFindLine);
-			Servo.rotate(4.5f);
+			Servo.rotate(5f);
 			return true;
 		}
 		return false;
