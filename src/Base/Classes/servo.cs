@@ -152,7 +152,7 @@ public static class Servo {
 
 	public static bool SmoothAlignNextAngle(FloorRoute.FollowLine Follower) {
 
-		if (Gyroscope.inPoint(true, 1) || Gyroscope.inDiagonal(true, 1)) { return false; }
+		if (Gyroscope.inPoint(true, 1.5f) || Gyroscope.inDiagonal(true, 1.5f)) { return false; }
 
 		Degrees alignLocal = new Degrees(0);
 

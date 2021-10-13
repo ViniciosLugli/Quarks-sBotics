@@ -45,7 +45,7 @@ public class Obstacle {
 		Servo.stop();
 		Servo.alignNextAngle();
 		Servo.encoder(-4);
-		Servo.rotate(-35);
+		Servo.rotate(-36);
 		Servo.encoder(10);
 
 		Servo.forward(200);
@@ -62,10 +62,10 @@ public class Obstacle {
 
 		// Find line right
 		Servo.encoder(-20);
-		Servo.rotate(35);
+		Servo.rotate(36);
 		Servo.alignNextAngle();
 
-		Servo.rotate(35);
+		Servo.rotate(36);
 		Servo.encoder(10);
 
 		Servo.forward(200);

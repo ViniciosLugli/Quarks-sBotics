@@ -56,7 +56,7 @@ public class FollowLine {
 
 	private bool checkSensor(ref Reflective refsensor_, ActionHandler correctCallback, ActionHandler crossCallback) {
 		if (refsensor_.light.raw < 52 && !refsensor_.isMat()) {
-			Clock timeout = new Clock(Time.current.millis + 128 + 48);
+			Clock timeout = new Clock(Time.current.millis + 128 + 64);
 			correctCallback();
 			while (refsensor_.light.raw < 52) {
 				mainRescue.verify();

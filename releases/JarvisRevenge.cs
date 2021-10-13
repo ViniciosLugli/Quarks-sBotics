@@ -273,7 +273,7 @@ public static class Gyroscope {
 		get => new Degrees((float)bc.Inclination());
 	}
 
-	public static bool inPoint(bool angExpand = true, byte offset = 8) {
+	public static bool inPoint(bool angExpand = true, float offset = 8) {
 		if (angExpand) {
 			foreach (Degrees point in Gyroscope.points) {
 				if (((Gyroscope.x.raw + offset) >= point.raw) && (Gyroscope.x.raw - offset <= point.raw)) {
@@ -291,7 +291,7 @@ public static class Gyroscope {
 		}
 	}
 
-	public static bool inDiagonal(bool angExpand = true, byte offset = 8) {
+	public static bool inDiagonal(bool angExpand = true, float offset = 8) {
 		if (angExpand) {
 			foreach (Degrees diagonal in Gyroscope.diagonals) {
 				if (((Gyroscope.x.raw + offset) >= diagonal.raw) && (Gyroscope.x.raw - offset <= diagonal.raw)) {
@@ -309,7 +309,7 @@ public static class Gyroscope {
 		}
 	}
 
-	public static float? inRawPoint(bool angExpand = true, byte offset = 8) {
+	public static float? inRawPoint(bool angExpand = true, float offset = 8) {
 		if (angExpand) {
 			foreach (Degrees point in Gyroscope.points) {
 				if (((Gyroscope.x.raw + offset) >= point.raw) && (Gyroscope.x.raw - offset <= point.raw)) {
@@ -326,7 +326,7 @@ public static class Gyroscope {
 		return null;
 	}
 
-	public static float? inRawDiagonal(bool angExpand = true, byte offset = 8) {
+	public static float? inRawDiagonal(bool angExpand = true, float offset = 8) {
 		if (angExpand) {
 			foreach (Degrees diagonal in Gyroscope.diagonals) {
 				if (((Gyroscope.x.raw + offset) >= diagonal.raw) && (Gyroscope.x.raw - offset <= diagonal.raw)) {
@@ -800,7 +800,7 @@ public static class Servo {
 
 	public static bool SmoothAlignNextAngle(FloorRoute.FollowLine Follower) {
 
-		if (Gyroscope.inPoint(true, 1) || Gyroscope.inDiagonal(true, 1)) { return false; }
+		if (Gyroscope.inPoint(true, 1.5f) || Gyroscope.inDiagonal(true, 1.5f)) { return false; }
 
 		Degrees alignLocal = new Degrees(0);
 
@@ -989,7 +989,7 @@ public static class FloorRoute {
 	
 		private bool checkSensor(ref Reflective refsensor_, ActionHandler correctCallback, ActionHandler crossCallback) {
 			if (refsensor_.light.raw < 52 && !refsensor_.isMat()) {
-				Clock timeout = new Clock(Time.current.millis + 128 + 48);
+				Clock timeout = new Clock(Time.current.millis + 128 + 64);
 				correctCallback();
 				while (refsensor_.light.raw < 52) {
 					mainRescue.verify();
@@ -1101,14 +1101,18 @@ public static class FloorRoute {
 				Servo.stop();
 				Follower.checkEndLine();
 				Buzzer.play(sFindLine);
-				Servo.rotate(-5f);
+				Servo.left();
+				while (Follower.s1.light.raw < 52) { }
+				Servo.rotate(-3f);
 				return true;
 			}
 			if (Follower.s2.light.raw < 52 && !Follower.s2.isMat()) {
 				Servo.stop();
 				Follower.checkEndLine();
 				Buzzer.play(sFindLine);
-				Servo.rotate(5f);
+				Servo.right();
+				while (Follower.s2.light.raw < 52) { }
+				Servo.rotate(3f);
 				return true;
 			}
 			return false;
@@ -1132,11 +1136,11 @@ public static class FloorRoute {
 		}
 	
 		public static void findLineLeft(FloorRoute.FollowLine Follower) {
-			Green.findLineBase(Follower, () => Servo.left(), -35, -87);
+			Green.findLineBase(Follower, () => Servo.left(), -32, -87);
 		}
 	
 		public static void findLineRight(FloorRoute.FollowLine Follower) {
-			Green.findLineBase(Follower, () => Servo.right(), 35, 87);
+			Green.findLineBase(Follower, () => Servo.right(), 32, 87);
 		}
 	
 		private static void findLineBase(FloorRoute.FollowLine Follower, ActionHandler turnCallback, float ignoreDegrees, float maxDegrees) {
@@ -1148,7 +1152,7 @@ public static class FloorRoute {
 			turnCallback();
 			while (true) {
 				if (CrossPath.checkLine(Follower)) { break; }
-				if (Gyroscope.inPoint(true, 3)) { Servo.encoder(-5); break; }
+				if (Gyroscope.inPoint(true, 1)) { Servo.encoder(-5); break; }
 			}
 			Servo.stop();
 		}
@@ -1219,7 +1223,7 @@ public static class FloorRoute {
 			Servo.stop();
 			Servo.alignNextAngle();
 			Servo.encoder(-4);
-			Servo.rotate(-35);
+			Servo.rotate(-36);
 			Servo.encoder(10);
 	
 			Servo.forward(200);
@@ -1236,10 +1240,10 @@ public static class FloorRoute {
 	
 			// Find line right
 			Servo.encoder(-20);
-			Servo.rotate(35);
+			Servo.rotate(36);
 			Servo.alignNextAngle();
 	
-			Servo.rotate(35);
+			Servo.rotate(36);
 			Servo.encoder(10);
 	
 			Servo.forward(200);
@@ -1279,7 +1283,7 @@ public static class FloorRoute {
 	}
 	static private class Security {
 		public static void verify(FloorRoute.FollowLine Follower) {
-			if (Time.timer.millis > 96) {
+			if (Time.timer.millis > 112) {
 				if (!Servo.SmoothAlignNextAngle(Follower)) {
 					Follower.resetMovement();
 				}
@@ -1619,7 +1623,7 @@ public class RescueRoute {
 				}
 	
 				if (counter > 8) {
-					if (Time.timer.millis < 1024) {
+					if (Time.timer.millis < (1024 - 256)) {
 						continue;
 					}
 					counter = 0;
@@ -1802,7 +1806,7 @@ public class RescueRoute {
 								Servo.rotate(-180);
 								Servo.alignNextAngle();
 							}
-							if (uRight.distance.raw < 30 && !this.brain.currentSide) {
+							if (uRight.distance.raw < 40 && !this.brain.currentSide) {
 								Servo.rotate(-45);
 								this.exitMain(false, false);
 							}
@@ -2018,7 +2022,7 @@ static Ultrassonic uFrontal = new Ultrassonic(0), uRight = new Ultrassonic(1);
 
 static Button bBack = new Button(0);
 
-static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, 190);
+static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, 200);
 static FloorRoute.Obstacle mainObstacle = new FloorRoute.Obstacle(ref uFrontal, 26);
 static RescueRoute mainRescue = new RescueRoute();
 

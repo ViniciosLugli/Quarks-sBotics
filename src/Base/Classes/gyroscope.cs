@@ -12,7 +12,7 @@ public static class Gyroscope {
 		get => new Degrees((float)bc.Inclination());
 	}
 
-	public static bool inPoint(bool angExpand = true, byte offset = 8) {
+	public static bool inPoint(bool angExpand = true, float offset = 8) {
 		if (angExpand) {
 			foreach (Degrees point in Gyroscope.points) {
 				if (((Gyroscope.x.raw + offset) >= point.raw) && (Gyroscope.x.raw - offset <= point.raw)) {
@@ -30,7 +30,7 @@ public static class Gyroscope {
 		}
 	}
 
-	public static bool inDiagonal(bool angExpand = true, byte offset = 8) {
+	public static bool inDiagonal(bool angExpand = true, float offset = 8) {
 		if (angExpand) {
 			foreach (Degrees diagonal in Gyroscope.diagonals) {
 				if (((Gyroscope.x.raw + offset) >= diagonal.raw) && (Gyroscope.x.raw - offset <= diagonal.raw)) {
@@ -48,7 +48,7 @@ public static class Gyroscope {
 		}
 	}
 
-	public static float? inRawPoint(bool angExpand = true, byte offset = 8) {
+	public static float? inRawPoint(bool angExpand = true, float offset = 8) {
 		if (angExpand) {
 			foreach (Degrees point in Gyroscope.points) {
 				if (((Gyroscope.x.raw + offset) >= point.raw) && (Gyroscope.x.raw - offset <= point.raw)) {
@@ -65,7 +65,7 @@ public static class Gyroscope {
 		return null;
 	}
 
-	public static float? inRawDiagonal(bool angExpand = true, byte offset = 8) {
+	public static float? inRawDiagonal(bool angExpand = true, float offset = 8) {
 		if (angExpand) {
 			foreach (Degrees diagonal in Gyroscope.diagonals) {
 				if (((Gyroscope.x.raw + offset) >= diagonal.raw) && (Gyroscope.x.raw - offset <= diagonal.raw)) {

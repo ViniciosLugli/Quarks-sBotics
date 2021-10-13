@@ -179,7 +179,7 @@ public class RescueBrain {
 			}
 
 			if (counter > 8) {
-				if (Time.timer.millis < 1024) {
+				if (Time.timer.millis < (1024 - 256)) {
 					continue;
 				}
 				counter = 0;
@@ -362,7 +362,7 @@ public class RescueBrain {
 							Servo.rotate(-180);
 							Servo.alignNextAngle();
 						}
-						if (uRight.distance.raw < 30 && !this.brain.currentSide) {
+						if (uRight.distance.raw < 40 && !this.brain.currentSide) {
 							Servo.rotate(-45);
 							this.exitMain(false, false);
 						}

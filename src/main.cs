@@ -37,7 +37,7 @@ static Ultrassonic uFrontal = new Ultrassonic(0), uRight = new Ultrassonic(1);
 
 static Button bBack = new Button(0);
 
-static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, 190);
+static FloorRoute.FollowLine mainFollow = new FloorRoute.FollowLine(ref s1, ref s2, 200);
 static FloorRoute.Obstacle mainObstacle = new FloorRoute.Obstacle(ref uFrontal, 26);
 static RescueRoute mainRescue = new RescueRoute();
 

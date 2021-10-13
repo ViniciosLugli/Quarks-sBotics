@@ -14,11 +14,11 @@ public class Green {
 	}
 
 	public static void findLineLeft(FloorRoute.FollowLine Follower) {
-		Green.findLineBase(Follower, () => Servo.left(), -35, -87);
+		Green.findLineBase(Follower, () => Servo.left(), -32, -87);
 	}
 
 	public static void findLineRight(FloorRoute.FollowLine Follower) {
-		Green.findLineBase(Follower, () => Servo.right(), 35, 87);
+		Green.findLineBase(Follower, () => Servo.right(), 32, 87);
 	}
 
 	private static void findLineBase(FloorRoute.FollowLine Follower, ActionHandler turnCallback, float ignoreDegrees, float maxDegrees) {
@@ -30,7 +30,7 @@ public class Green {
 		turnCallback();
 		while (true) {
 			if (CrossPath.checkLine(Follower)) { break; }
-			if (Gyroscope.inPoint(true, 3)) { Servo.encoder(-5); break; }
+			if (Gyroscope.inPoint(true, 1)) { Servo.encoder(-5); break; }
 		}
 		Servo.stop();
 	}

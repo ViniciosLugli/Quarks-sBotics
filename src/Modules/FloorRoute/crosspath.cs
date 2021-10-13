@@ -67,14 +67,18 @@ public static class CrossPath {
 			Servo.stop();
 			Follower.checkEndLine();
 			Buzzer.play(sFindLine);
-			Servo.rotate(-5f);
+			Servo.left();
+			while (Follower.s1.light.raw < 52) { }
+			Servo.rotate(-3f);
 			return true;
 		}
 		if (Follower.s2.light.raw < 52 && !Follower.s2.isMat()) {
 			Servo.stop();
 			Follower.checkEndLine();
 			Buzzer.play(sFindLine);
-			Servo.rotate(5f);
+			Servo.right();
+			while (Follower.s2.light.raw < 52) { }
+			Servo.rotate(3f);
 			return true;
 		}
 		return false;
