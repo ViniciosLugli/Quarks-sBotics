@@ -1,5 +1,5 @@
 # Quarks-sBotics
-Código da equipe SESI Quarks no evento da OBR utilizando o simulador sBotics! 🥰✨
+Código da equipe SESI Quarks na competição da OBR utilizando o simulador sBotics! 🥰✨
 
 ---
 ### **Proibido qualquer tipo de cópia ou utilização em competições da OBR**
